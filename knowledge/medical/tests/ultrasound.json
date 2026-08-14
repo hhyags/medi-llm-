@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-tests-ultrasound",
+  "title": "Diagnostic Ultrasound (Sonography) Guide",
+  "source": "MedlinePlus",
+  "source_url": "https://medlineplus.gov/ultrasound.html",
+  "language": "en",
+  "topic": "ultrasound",
+  "category": "test",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "059f84df5743dc2b43b3e0854b7e903504e757414d4fc096eee8af715acad26e"
+}

@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-symptoms-fever",
+  "title": "Fever Evaluation and Home Care Protocols",
+  "source": "CDC / MedlinePlus",
+  "source_url": "https://medlineplus.gov/fever.html",
+  "language": "en",
+  "topic": "fever",
+  "category": "symptom",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "txt",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "c89a67d5def54fa65daeb6bc48acffaf330beed4bbd59ada8a153fe7ce23d397"
+}

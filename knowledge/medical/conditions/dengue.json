@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-conditions-dengue",
+  "title": "Dengue Clinical Management and Warning Signs",
+  "source": "WHO / ICMR",
+  "source_url": "https://www.who.int/news-room/fact-sheets/detail/dengue-and-severe-dengue",
+  "language": "en",
+  "topic": "dengue",
+  "category": "condition",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "1b3d3c1c30d77c5e90be4f42fd69d2afa6c5f0bbccb8b90826f17424b2a937bb"
+}

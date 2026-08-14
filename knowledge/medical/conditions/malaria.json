@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-conditions-malaria",
+  "title": "Malaria Overview and Fever Cycle",
+  "source": "WHO / CDC",
+  "source_url": "https://www.cdc.gov/malaria/about/disease.html",
+  "language": "en",
+  "topic": "malaria",
+  "category": "condition",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "2ed4f43958ef0358f4f3c622984cc87c67f9548ad17659ec023b3c8bfa2a79d8"
+}

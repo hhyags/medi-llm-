@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-symptoms-cough",
+  "title": "Cough Symptom Guide and Red Flags",
+  "source": "MedlinePlus / CDC",
+  "source_url": "https://medlineplus.gov/cough.html",
+  "language": "en",
+  "topic": "cough",
+  "category": "symptom",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "aab33f37ba1438be6e282eac220de2eb8e5fc27f3b94558f6c5b8db0705de709"
+}

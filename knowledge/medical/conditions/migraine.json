@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-conditions-migraine",
+  "title": "Migraine and Headache Clinical Protocol",
+  "source": "WHO / MedlinePlus",
+  "source_url": "https://medlineplus.gov/migraine.html",
+  "language": "en",
+  "topic": "migraine",
+  "category": "condition",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "d81d3ed22a0a415db90ee3573f9d341061fe0c2c68a7cb035a2299e8a8b2a529"
+}

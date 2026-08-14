@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-conditions-kidney_disease",
+  "title": "Chronic Kidney Disease (CKD) Overview",
+  "source": "NKF / WHO",
+  "source_url": "https://www.kidney.org/atoz/content/about-chronic-kidney-disease",
+  "language": "en",
+  "topic": "kidney disease",
+  "category": "condition",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "affb1ac0931063134813bc0f9a317eb2b01158692819d69694dbe801c7a519e6"
+}

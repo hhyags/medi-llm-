@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-multilingual-hi-hypertension_hindi",
+  "title": "उच्च रक्तचाप (Hypertension) मार्गदर्शिका",
+  "source": "WHO / ICMR",
+  "source_url": "https://www.who.int/hi/news-room/fact-sheets/detail/hypertension",
+  "language": "hi",
+  "topic": "hypertension",
+  "category": "condition",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "8b5fd9ce62121d219e4b67bb432465cada93a4a271d5a1a5d13ec9aaccab770b"
+}

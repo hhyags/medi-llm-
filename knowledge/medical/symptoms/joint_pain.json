@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-symptoms-joint_pain",
+  "title": "Joint Pain (Arthralgia) Symptom Guide",
+  "source": "MedlinePlus",
+  "source_url": "https://medlineplus.gov/jointdisorders.html",
+  "language": "en",
+  "topic": "joint pain",
+  "category": "symptom",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "adce215f78f80457e06e13b56484e528bb2a14071d284aa80792d219030798f7"
+}

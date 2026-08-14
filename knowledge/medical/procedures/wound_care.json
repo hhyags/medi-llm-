@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-procedures-wound_care",
+  "title": "Basic Wound Care and First Aid",
+  "source": "CDC / Red Cross",
+  "source_url": "https://www.cdc.gov/natural-disasters/safety/wound-care.html",
+  "language": "en",
+  "topic": "wound care",
+  "category": "procedure",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "56e225a756c8886a29d2be7fcd1140345336bae684ef3b3116a01c42ae7f99cc"
+}

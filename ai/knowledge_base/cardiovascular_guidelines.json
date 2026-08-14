@@ -1,0 +1,22 @@
+[
+  {
+    "id": "doc_cardio_01",
+    "title": "AHA/WHO Hypertension & Blood Pressure Guidelines 2024",
+    "source": "AHA/WHO Clinical Guidelines 2024",
+    "authority": "American Heart Association / WHO",
+    "section": "Hypertension & Blood Pressure Categories",
+    "condition": "Hypertension",
+    "language": "en",
+    "content": "Hypertension is defined as persistent blood pressure of 130/80 mmHg or higher. Normal blood pressure is below 120/80 mmHg. Hypertension is often asymptomatic ('silent killer') but increases the risk of heart attack, stroke, heart failure, and kidney disease. Lifestyle modifications include reducing sodium intake (<2,300 mg/day), eating a DASH diet, regular exercise, and stress management."
+  },
+  {
+    "id": "doc_cardio_02",
+    "title": "WHO Cardiovascular Disease & Chest Pain Emergency Protocol",
+    "source": "WHO Emergency Triage Guidelines 2024",
+    "authority": "World Health Organization (WHO)",
+    "section": "Angina vs Heart Attack Triage",
+    "condition": "Cardiovascular Emergency",
+    "language": "en",
+    "content": "Angina is chest discomfort caused by reduced blood flow to the heart muscle. Acute Myocardial Infarction (Heart Attack) occurs when blood flow is blocked. Warning signs of a heart attack include severe chest pain or pressure radiating to the arm, neck, jaw, or back, shortness of breath, cold sweats, and lightheadedness. Any sudden or severe chest pain requires immediate emergency medical attention."
+  }
+]

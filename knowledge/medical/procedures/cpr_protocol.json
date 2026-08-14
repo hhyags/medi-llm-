@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-procedures-cpr_protocol",
+  "title": "Cardiopulmonary Resuscitation (CPR) Protocol",
+  "source": "AHA / Red Cross",
+  "source_url": "https://www.heart.org/en/cpr",
+  "language": "en",
+  "topic": "cpr",
+  "category": "procedure",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "d852001341eee18d45ed6ff26be307b788b8e27dcce21af5fbf8f6dde254e7fc"
+}

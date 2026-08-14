@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-conditions-arthritis",
+  "title": "Arthritis and Joint Health Guidelines",
+  "source": "CDC / MedlinePlus",
+  "source_url": "https://medlineplus.gov/arthritis.html",
+  "language": "en",
+  "topic": "arthritis",
+  "category": "condition",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "312909a56b554c5b1187f88fbe21fb747f47b05e209669919f619331b7a8382b"
+}

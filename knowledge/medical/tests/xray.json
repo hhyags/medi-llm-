@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-tests-xray",
+  "title": "Diagnostic Radiography (X-Ray) Guide",
+  "source": "MedlinePlus / ACR",
+  "source_url": "https://medlineplus.gov/xrays.html",
+  "language": "en",
+  "topic": "xray",
+  "category": "test",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "61ee9cb8eaef04d03f915ef38573c09fbf254d352d58810e760c8375dcd15965"
+}

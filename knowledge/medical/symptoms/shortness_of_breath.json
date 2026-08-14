@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-symptoms-shortness_of_breath",
+  "title": "Dyspnea (Shortness of Breath) Evaluation",
+  "source": "MedlinePlus / ATS",
+  "source_url": "https://medlineplus.gov/breathingproblems.html",
+  "language": "en",
+  "topic": "shortness of breath",
+  "category": "symptom",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "94d5a80d4604c5f810c871253b2c15af497cdb4649406748d7ead5592b41b727"
+}

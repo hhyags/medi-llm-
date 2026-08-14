@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-tests-cbc",
+  "title": "Complete Blood Count (CBC) Diagnostic Guide",
+  "source": "MedlinePlus / CDC",
+  "source_url": "https://medlineplus.gov/lab-tests/complete-blood-count-cbc/",
+  "language": "en",
+  "topic": "cbc",
+  "category": "test",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "44c6ab773ee3e9fca8d9b94603d31af9ae1ed85e7883a9b5150ad84c2f1c0047"
+}

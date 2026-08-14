@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-conditions-anemia",
+  "title": "Anemia Diagnosis and Dietary Guidelines",
+  "source": "WHO / MedlinePlus",
+  "source_url": "https://medlineplus.gov/anemia.html",
+  "language": "en",
+  "topic": "anemia",
+  "category": "condition",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "82c6491e020d162e9f99561558f71890a73e65984c9d6038189c06d280bba577"
+}

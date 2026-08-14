@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-symptoms-vomiting",
+  "title": "Vomiting and Nausea Care Protocol",
+  "source": "MedlinePlus / CDC",
+  "source_url": "https://medlineplus.gov/nauseaandvomiting.html",
+  "language": "en",
+  "topic": "vomiting",
+  "category": "symptom",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "0bad3f1f7503a82060c39521ebb79bc7277872f2b52102cda12ab2419396cf79"
+}

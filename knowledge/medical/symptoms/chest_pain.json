@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-symptoms-chest_pain",
+  "title": "Chest Pain Triage Protocol",
+  "source": "AHA / MedlinePlus",
+  "source_url": "https://medlineplus.gov/chestpain.html",
+  "language": "en",
+  "topic": "chest pain",
+  "category": "symptom",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "417fc5d628fc9cc8aa33e96abbaf42f6aed195f2a1d28640e697e08965b4e449"
+}

@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-tests-blood_glucose",
+  "title": "Blood Glucose Testing Reference",
+  "source": "ADA / WHO",
+  "source_url": "https://medlineplus.gov/lab-tests/blood-glucose-test/",
+  "language": "en",
+  "topic": "blood glucose",
+  "category": "test",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "b869c8f43a147e441f2a9b27fb5c84177f90d14e264378e2ba4164dc087f0f0b"
+}

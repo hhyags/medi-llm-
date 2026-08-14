@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-tests-lipid_profile",
+  "title": "Lipid Profile Cholesterol Test Reference",
+  "source": "AHA / MedlinePlus",
+  "source_url": "https://medlineplus.gov/lab-tests/lipid-panel/",
+  "language": "en",
+  "topic": "lipid profile",
+  "category": "test",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "4d429af60aa551cd51a14a26f117fb7659a144bde732895461a211b0f32a05b1"
+}

@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-symptoms-rash",
+  "title": "Skin Rash and Dermatologic Triage",
+  "source": "MedlinePlus",
+  "source_url": "https://medlineplus.gov/rashes.html",
+  "language": "en",
+  "topic": "rash",
+  "category": "symptom",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "6eb6b5b900507bf6930d77f260e753890e1677429c9947e108444a4f1392d810"
+}

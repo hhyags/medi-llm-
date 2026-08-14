@@ -1,0 +1,22 @@
+[
+  {
+    "id": "doc_resp_01",
+    "title": "CDC Respiratory Health & Asthma Management Guidelines",
+    "source": "CDC Respiratory Protocol 2024",
+    "authority": "Centers for Disease Control and Prevention (CDC)",
+    "section": "Asthma Symptoms & Care",
+    "condition": "Asthma",
+    "language": "en",
+    "content": "Asthma is a chronic inflammatory disorder of the airways causing recurring episodes of wheezing, shortness of breath, chest tightness, and coughing. Triggers include allergens, cold air, exercise, and respiratory infections. Management involves avoiding triggers, using prescribed controller medications, and carrying rescue inhalers for acute symptoms."
+  },
+  {
+    "id": "doc_general_02",
+    "title": "ICMR Clinical Fever & Dengue Management Protocol",
+    "source": "ICMR Vector-Borne Disease Protocol 2023",
+    "authority": "Indian Council of Medical Research (ICMR)",
+    "section": "Fever & Mosquito-Borne Illnesses",
+    "condition": "Fever & Dengue",
+    "language": "en",
+    "content": "Fever is an elevated body temperature above 100.4°F (38°C), commonly caused by viral or bacterial infections. Dengue fever is transmitted by Aedes mosquitoes and presents with high fever, severe headache, retro-orbital pain, joint/muscle aches ('breakbone fever'), and rash. Adequate hydration and paracetamol for fever control are recommended while avoiding NSAIDs like ibuprofen due to bleeding risk."
+  }
+]

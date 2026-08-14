@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-symptoms-headache",
+  "title": "Headache Symptom Triage",
+  "source": "WHO / MedlinePlus",
+  "source_url": "https://medlineplus.gov/headache.html",
+  "language": "en",
+  "topic": "headache",
+  "category": "symptom",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "46ed37ad95b44e46b335e2357cb9804fdd7e4fd8279465e311a5d33962cb4053"
+}

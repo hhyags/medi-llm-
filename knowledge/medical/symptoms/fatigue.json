@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-symptoms-fatigue",
+  "title": "Chronic Fatigue & Weakness Evaluation",
+  "source": "MedlinePlus",
+  "source_url": "https://medlineplus.gov/fatigue.html",
+  "language": "en",
+  "topic": "fatigue",
+  "category": "symptom",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "249e2fd72c5a42c63d76b800713a3d5fa948e32c550ae7f1af0826801d0099b6"
+}

@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-symptoms-sore_throat",
+  "title": "Sore Throat (Pharyngitis) Assessment",
+  "source": "CDC / MedlinePlus",
+  "source_url": "https://medlineplus.gov/sorethroat.html",
+  "language": "en",
+  "topic": "sore throat",
+  "category": "symptom",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "dffd786c9ec8740d18f340cdcbb2fe0dd71f62533fe6343b8dfd8d89270f117c"
+}

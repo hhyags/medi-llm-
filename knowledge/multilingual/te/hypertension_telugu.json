@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-multilingual-te-hypertension_telugu",
+  "title": "రక్తపోటు (Hypertension) జాగ్రత్తలు",
+  "source": "WHO / ICMR",
+  "source_url": "https://www.who.int/news-room/fact-sheets/detail/hypertension",
+  "language": "te",
+  "topic": "hypertension",
+  "category": "condition",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "ffd7722c4520216d6ef892541a48485be1cded3abe93f0893c4feefcba056041"
+}

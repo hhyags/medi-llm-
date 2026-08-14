@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-tests-ct_scan",
+  "title": "Computed Tomography (CT Scan) Guide",
+  "source": "MedlinePlus / ACR",
+  "source_url": "https://medlineplus.gov/ctscans.html",
+  "language": "en",
+  "topic": "ct scan",
+  "category": "test",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "f2b29c4b3226d50c0b90d0c65de359de1ea62210213288977cd33696a3057b01"
+}

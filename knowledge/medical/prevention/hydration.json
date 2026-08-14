@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-prevention-hydration",
+  "title": "Hydration and Fluid Balance",
+  "source": "CDC / WHO",
+  "source_url": "https://www.cdc.gov/healthy-weight-growth/water-health/index.html",
+  "language": "en",
+  "topic": "hydration",
+  "category": "prevention",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "c3e3e4fc8c1c3be46cd5c5e4303852725339833a85373ab737851fb811fb0f16"
+}

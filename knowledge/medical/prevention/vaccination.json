@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-prevention-vaccination",
+  "title": "Vaccination and Immunization Guidelines",
+  "source": "WHO / CDC",
+  "source_url": "https://www.who.int/news-room/fact-sheets/detail/immunization-coverage",
+  "language": "en",
+  "topic": "vaccination",
+  "category": "prevention",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "95a928cddd02a6c9f263c8bdf856c143e4995b2a2bcb129dd3667298972098b2"
+}

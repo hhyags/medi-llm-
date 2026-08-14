@@ -1,0 +1,13 @@
+# Fever: Causes, Measurement & Safe Management
+
+## Overview
+A fever is a temporary increase in body temperature, often due to an illness. Normal body temperature is around 98.6°F (37°C). A fever is generally considered a body temperature of 100.4°F (38°C) or higher.
+
+## Home Care & Hydration
+- Drink plenty of fluids (water, clear broths, oral rehydration solutions).
+- Rest in a comfortably cool environment.
+- Use lightweight clothing and light blankets.
+- Lukewarm sponge baths can help lower body temperature safely.
+
+## Emergency Warning Signs
+Seek urgent medical attention if fever exceeds 103°F (39.4°C), lasts more than 3 consecutive days, or is accompanied by stiff neck, confusion, difficulty breathing, or severe persistent vomiting.

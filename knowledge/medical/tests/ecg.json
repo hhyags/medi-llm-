@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-tests-ecg",
+  "title": "Electrocardiogram (ECG / EKG) Guide",
+  "source": "AHA / MedlinePlus",
+  "source_url": "https://medlineplus.gov/lab-tests/electrocardiogram-ecg/",
+  "language": "en",
+  "topic": "ecg",
+  "category": "test",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "5af0cdef5b0a0d696534bdbaaca7ca74ad46eddd8b0a3833666b8b58b32e44c6"
+}

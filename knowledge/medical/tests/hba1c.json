@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-tests-hba1c",
+  "title": "Hemoglobin A1c (HbA1c) Reference",
+  "source": "ADA / WHO",
+  "source_url": "https://medlineplus.gov/lab-tests/hemoglobin-a1c-hba1c-test/",
+  "language": "en",
+  "topic": "hba1c",
+  "category": "test",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "c4f7bbda89e7fee1fe23279a68cd93d7e056a4424ff928e2b17294a3f0ec1e6c"
+}

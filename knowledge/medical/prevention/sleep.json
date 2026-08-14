@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-prevention-sleep",
+  "title": "Sleep Hygiene and Rest Guidelines",
+  "source": "CDC / Sleep Foundation",
+  "source_url": "https://www.cdc.gov/sleep/about/index.html",
+  "language": "en",
+  "topic": "sleep",
+  "category": "prevention",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "5dd41d52b4cffd7c92644b2a6c1a54879d5338d7f11d04541d8aa52b3cf1e139"
+}

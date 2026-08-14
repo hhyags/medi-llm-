@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-conditions-tuberculosis",
+  "title": "Tuberculosis (TB) Detection and Care",
+  "source": "WHO / ICMR",
+  "source_url": "https://www.who.int/news-room/fact-sheets/detail/tuberculosis",
+  "language": "en",
+  "topic": "tuberculosis",
+  "category": "condition",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "9f73c0be2c12fd9deafc59497dbcddf996beec14f361c68cc354b3fc4138e817"
+}

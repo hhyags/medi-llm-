@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-multilingual-te-diabetes_telugu",
+  "title": "చక్కెర వ్యాధి (Diabetes) సమగ్ర సమాచారం",
+  "source": "WHO / ICMR",
+  "source_url": "https://www.who.int/news-room/fact-sheets/detail/diabetes",
+  "language": "te",
+  "topic": "diabetes",
+  "category": "condition",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "5021111e3f6d8dbee8b1a426ef0a2135108f713b16650a9d9f9f3b4fa09ecf0f"
+}

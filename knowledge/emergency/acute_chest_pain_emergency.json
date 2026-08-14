@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-emergency-acute_chest_pain_emergency",
+  "title": "Acute Cardiac Emergency Protocol",
+  "source": "AHA / WHO",
+  "source_url": "https://www.heart.org/en/health-topics/heart-attack/warning-signs-of-a-heart-attack",
+  "language": "en",
+  "topic": "chest pain",
+  "category": "emergency",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "156a5ab07129307f57b06b583a6ac8a75b8d69d5bd5cb5a4deb590912beefe8e"
+}

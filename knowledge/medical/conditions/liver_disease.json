@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-conditions-liver_disease",
+  "title": "Liver Health and Fatty Liver Management",
+  "source": "WHO / MedlinePlus",
+  "source_url": "https://medlineplus.gov/liverdiseases.html",
+  "language": "en",
+  "topic": "liver disease",
+  "category": "condition",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "8b8cbcf3157ad6858b3e5fd6a7b355dc7f4b2fda4c8635e317e246b79860c6a2"
+}

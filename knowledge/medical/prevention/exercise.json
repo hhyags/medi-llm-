@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-prevention-exercise",
+  "title": "Physical Activity and Exercise Guidelines",
+  "source": "WHO / CDC",
+  "source_url": "https://www.who.int/news-room/fact-sheets/detail/physical-activity",
+  "language": "en",
+  "topic": "exercise",
+  "category": "prevention",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "8f258982170fc414b7c29ecb27ffb6a60641c45f148ad8526dfaedc5699ba6b3"
+}

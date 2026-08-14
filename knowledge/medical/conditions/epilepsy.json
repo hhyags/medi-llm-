@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-conditions-epilepsy",
+  "title": "Epilepsy and Seizure Safety Protocols",
+  "source": "WHO / CDC",
+  "source_url": "https://www.who.int/news-room/fact-sheets/detail/epilepsy",
+  "language": "en",
+  "topic": "epilepsy",
+  "category": "condition",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "41d86cac15742e12484363b9e1e75013374ef2a050e9f0356a52b5f35aefc9e9"
+}

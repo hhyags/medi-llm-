@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-symptoms-abdominal_pain",
+  "title": "Abdominal Pain Clinical Evaluation",
+  "source": "MedlinePlus",
+  "source_url": "https://medlineplus.gov/abdominalpain.html",
+  "language": "en",
+  "topic": "abdominal pain",
+  "category": "symptom",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "4faab1168897373b233e648f5ae2b4aae9f6f977cd7d8e23dcca2bcdb5c544c5"
+}

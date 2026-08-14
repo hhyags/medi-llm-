@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-symptoms-dizziness",
+  "title": "Dizziness and Vertigo Symptom Reference",
+  "source": "MedlinePlus",
+  "source_url": "https://medlineplus.gov/dizzinessandvertigo.html",
+  "language": "en",
+  "topic": "dizziness",
+  "category": "symptom",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "daa33c03ebabe76d35c7a5c1d7c2eadd3019f8f9f51ed6bc557019982e613691"
+}

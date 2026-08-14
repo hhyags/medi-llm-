@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-tests-mri",
+  "title": "Magnetic Resonance Imaging (MRI) Guide",
+  "source": "MedlinePlus / ACR",
+  "source_url": "https://medlineplus.gov/mriscans.html",
+  "language": "en",
+  "topic": "mri",
+  "category": "test",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "a13b982b086f112f9805e5111579853f2dfb7a3cd9e843f7e3ea947c744889f2"
+}

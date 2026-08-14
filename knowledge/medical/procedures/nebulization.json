@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-procedures-nebulization",
+  "title": "Nebulization Procedure and Inhalation Care",
+  "source": "GINA / MedlinePlus",
+  "source_url": "https://medlineplus.gov/druginfo/meds/a607062.html",
+  "language": "en",
+  "topic": "nebulization",
+  "category": "procedure",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "27d48621003ceca9b887d32adb6688bf456cc04acf560118312f43480e2fc9f5"
+}

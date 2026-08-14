@@ -1,0 +1,2 @@
+# Diabetes Mellitus Summary
+Diabetes is a metabolic condition marked by elevated blood glucose. Symptoms include excessive thirst (polydipsia), frequent urination (polyuria), weight loss, and fatigue. Fasting blood sugar >= 126 mg/dL or HbA1c >= 6.5% confirms diagnosis. Managed with diet, exercise, and clinical guidance.

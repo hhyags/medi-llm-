@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-prevention-preventive_care",
+  "title": "Annual Preventive Health Checkups",
+  "source": "USPSTF / WHO",
+  "source_url": "https://www.who.int/health-topics/primary-health-care",
+  "language": "en",
+  "topic": "preventive healthcare",
+  "category": "prevention",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "ad15118fa33a56041e7a1343de5015cb1803fcf4b5a4e16b3993b921de182de1"
+}

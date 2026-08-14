@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-prevention-hand_hygiene",
+  "title": "Hand Hygiene and Infection Prevention",
+  "source": "WHO / CDC",
+  "source_url": "https://www.who.int/campaigns/world-hand-hygiene-day",
+  "language": "en",
+  "topic": "hand hygiene",
+  "category": "prevention",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "5f6c1dffadd78a85ba7cfc22548cff80389239cb9ddb0b59af8465ba09d8a038"
+}

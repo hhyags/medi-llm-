@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-conditions-stroke",
+  "title": "Acute Stroke Awareness and FAST Protocol",
+  "source": "CDC / WHO",
+  "source_url": "https://www.cdc.gov/stroke/signs-symptoms.htm",
+  "language": "en",
+  "topic": "stroke",
+  "category": "condition",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "9d4a4a978528cc818cba52cfa68c3f7b379db0d25c193ea7188839cafb084315"
+}

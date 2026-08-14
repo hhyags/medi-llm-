@@ -1,0 +1,42 @@
+[
+  {
+    "id": "doc_diabetes_01",
+    "title": "WHO Diabetes Clinical Management & Overview Guidelines 2024",
+    "source": "WHO Diabetes Guidelines 2024",
+    "authority": "World Health Organization (WHO)",
+    "section": "Overview & Classification",
+    "condition": "Diabetes Mellitus",
+    "language": "en",
+    "content": "Diabetes mellitus is a chronic metabolic condition characterized by elevated levels of blood glucose (hyperglycemia). Type 1 diabetes is an autoimmune condition where the pancreas produces little or no insulin. Type 2 diabetes occurs when the body becomes resistant to insulin or does not produce enough insulin, accounting for over 95% of diabetes cases worldwide."
+  },
+  {
+    "id": "doc_diabetes_02",
+    "title": "CDC Diabetes Symptoms and Diagnostic Education Protocol",
+    "source": "CDC Clinical Reference 2024",
+    "authority": "Centers for Disease Control and Prevention (CDC)",
+    "section": "Common Symptoms & Early Indicators",
+    "condition": "Diabetes Mellitus",
+    "language": "en",
+    "content": "Common symptoms of diabetes include excessive thirst (polydipsia), frequent urination (polyuria) especially at night, extreme hunger (polyphagia), unexplained weight loss, blurred vision, fatigue, and slow-healing sores or frequent infections. Diagnosis requires clinical blood tests such as Fasting Plasma Glucose (>=126 mg/dL) or HbA1c (>=6.5%)."
+  },
+  {
+    "id": "doc_diabetes_03",
+    "title": "ICMR Guidelines for Management of Type 2 Diabetes",
+    "source": "ICMR Diabetes Management Protocol 2023",
+    "authority": "Indian Council of Medical Research (ICMR)",
+    "section": "Lifestyle & Preventive Care",
+    "condition": "Type 2 Diabetes",
+    "language": "en",
+    "content": "Lifestyle management is fundamental for diabetes control. Key recommendations include a balanced diet low in refined carbohydrates and sugars, regular physical activity (minimum 150 minutes of moderate aerobic exercise per week), weight management, routine blood glucose monitoring, and avoiding tobacco use. Complication screenings for eyes, kidneys, and feet should occur annually."
+  },
+  {
+    "id": "doc_diabetes_04",
+    "title": "WHO Emergency Hypoglycemia Guidelines",
+    "source": "WHO Clinical Guidelines 2024",
+    "authority": "World Health Organization (WHO)",
+    "section": "Hypoglycemia Warning & Emergency Actions",
+    "condition": "Hypoglycemia",
+    "language": "en",
+    "content": "Hypoglycemia occurs when blood sugar drops below 70 mg/dL. Symptoms include shakiness, sweating, confusion, dizziness, rapid heart rate, and headache. Immediate treatment involves consuming 15-20 grams of fast-acting glucose (e.g., fruit juice or glucose tablets). If unconsciousness or seizure occurs, immediate emergency medical intervention is required."
+  }
+]

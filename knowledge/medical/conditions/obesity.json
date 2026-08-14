@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-conditions-obesity",
+  "title": "Obesity and Metabolic Health Guidelines",
+  "source": "WHO / CDC",
+  "source_url": "https://www.who.int/news-room/fact-sheets/detail/obesity-and-overweight",
+  "language": "en",
+  "topic": "obesity",
+  "category": "condition",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "adc8b620effbdbb9090d6807290aef4f673f0cda1e20ed387bb70cd06d11acdb"
+}

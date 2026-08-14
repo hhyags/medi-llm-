@@ -1,0 +1,16 @@
+{
+  "document_id": "medvoice-medical-conditions-pneumonia",
+  "title": "Pneumonia Respiratory Guidelines",
+  "source": "WHO / MedlinePlus",
+  "source_url": "https://medlineplus.gov/pneumonia.html",
+  "language": "en",
+  "topic": "pneumonia",
+  "category": "condition",
+  "trust_level": "authoritative",
+  "version": "1.0",
+  "format": "md",
+  "published_date": "2024-01-15",
+  "last_reviewed": "2024-11-01",
+  "expiry_date": null,
+  "content_hash": "5f2fce870c81e06ac449ad3e3d53a539582f1e859feab8db0c4cc8f5a7ba3b81"
+}
