@@ -12,7 +12,7 @@ from app.llm.enhanced_provider import LLMProviderFactory
 from app.config import Settings
 from app.db.session import get_db, engine, Base
 from app.db.seed import seed_database
-from app.routers import hospital, appointments, rag_router
+from app.routers import hospital, appointments, rag_router, calling
 from app.orchestrator.orchestrator import AIOrchestrator
 
 app = FastAPI(title="MedVoice AI API — Phase 3 Medical RAG & Receptionist", version="0.3.0")
@@ -35,6 +35,7 @@ orchestrator = AIOrchestrator(llm_provider)
 app.include_router(hospital.router)
 app.include_router(appointments.router)
 app.include_router(rag_router.router)
+app.include_router(calling.router)
 
 
 @app.get("/health")

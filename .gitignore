@@ -6,6 +6,9 @@
 apps/api/.env
 apps/api/.env.local
 *.env
+!.env.example
+!.env.local.example
+!*.example
 
 # Local Databases & Storage
 *.db
@@ -155,7 +158,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# Python packaging lib
+/lib/
 lib64/
 parts/
 sdist/

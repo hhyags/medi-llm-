@@ -78,13 +78,16 @@ export default function AICallingView() {
               <PhoneCall className="w-5 h-5 text-sky-600" />
               AI Voice Calling Agent
             </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800 border border-sky-200 flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              {aiCallingSettings.agentName}
+              Sarvam AI Agent ({aiCallingSettings.agentName})
+            </span>
+            <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-purple-50 text-purple-700 border border-purple-200">
+              Twilio Outbound +1 (463) 262-0069
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Automated outbound calling engine for confirmations, smart rescheduling, cancellations & human triage escalation.
+            Sarvam AI Outbound voice engine: automated confirmations, smart rescheduling, cancellations &amp; clinical guardrails.
           </p>
         </div>
 
@@ -94,7 +97,7 @@ export default function AICallingView() {
           style={{ animationDuration: '4s' }}
         >
           <Sparkles className="w-4 h-4 text-sky-200" />
-          📞 Start Voice Call Simulator
+          📞 Launch AI Voice Call Agent
         </button>
       </div>
 
