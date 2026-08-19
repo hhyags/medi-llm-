@@ -34,6 +34,42 @@ export default function AICallingView() {
 
   const [selectedCallForTranscript, setSelectedCallForTranscript] = useState<CallRecord | null>(null);
   const [filterOutcome, setFilterOutcome] = useState<string>('ALL');
+  const [isDeployingInbound, setIsDeployingInbound] = useState(false);
+  const [inboundDeployStatus, setInboundDeployStatus] = useState<'idle' | 'deploying' | 'deployed' | 'error'>('idle');
+  const [inboundDeployMessage, setInboundDeployMessage] = useState<string>('');
+
+  const handleDeployInboundLine = async () => {
+    setIsDeployingInbound(true);
+    setInboundDeployStatus('deploying');
+    try {
+      const response = await fetch('/api/calling/inbound-deployment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'My inbound line',
+          description: 'Inbound support line',
+          phoneNumbers: ['+14632620069'],
+          startTime: '08:00',
+          endTime: '20:00',
+          allowedDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+          timezone: 'Asia/Kolkata'
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setInboundDeployStatus('deployed');
+        setInboundDeployMessage(`Inbound line deployed successfully! ID: ${data.deployment_id || 'active'}`);
+      } else {
+        setInboundDeployStatus('error');
+        setInboundDeployMessage(data.error || 'Failed to deploy inbound line.');
+      }
+    } catch (err: any) {
+      setInboundDeployStatus('error');
+      setInboundDeployMessage(err.message || 'Network error contacting deployment API.');
+    } finally {
+      setIsDeployingInbound(false);
+    }
+  };
 
   // Stats calculation
   const totalCalls = calls.length + 20;
@@ -98,6 +134,54 @@ export default function AICallingView() {
         >
           <Sparkles className="w-4 h-4 text-sky-200" />
           📞 Launch AI Voice Call Agent
+        </button>
+      </div>
+
+      {/* Sarvam AI Inbound Support Line Deployment Card */}
+      <div className="glass-card rounded-2xl p-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-900/60 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/30 flex items-center justify-center text-xs">
+              <PhoneForwarded className="w-4 h-4" />
+            </div>
+            <span className="text-xs font-bold text-sky-300 uppercase tracking-wider">
+              Sarvam AI Inbound Receptionist Line Deployment
+            </span>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              Active Hotline
+            </span>
+          </div>
+
+          <div className="text-xs text-slate-300 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px]">
+            <span>📞 Inbound Hotline: <strong className="text-white">+1 (463) 262-0069</strong></span>
+            <span>⏰ Hours: <strong className="text-white">08:00 - 20:00</strong></span>
+            <span>🌐 Timezone: <strong className="text-white">Asia/Kolkata</strong></span>
+            <span>📅 Days: <strong className="text-white">Mon - Fri</strong></span>
+          </div>
+
+          {inboundDeployMessage && (
+            <p className="text-[11px] font-mono text-emerald-400 pt-0.5">
+              ✅ {inboundDeployMessage}
+            </p>
+          )}
+        </div>
+
+        <button
+          onClick={handleDeployInboundLine}
+          disabled={isDeployingInbound}
+          className="px-4 py-2 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-2 self-start md:self-auto shrink-0 transition-all"
+        >
+          {isDeployingInbound ? (
+            <>
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              <span>Deploying to Sarvam...</span>
+            </>
+          ) : (
+            <>
+              <PhoneCall className="w-3.5 h-3.5" />
+              <span>Deploy Inbound Line</span>
+            </>
+          )}
         </button>
       </div>
 

@@ -10,7 +10,7 @@ async def get_calling_agent_status():
     """Returns Sarvam AI Calling Agent metadata & connection status."""
     has_key = bool(sarvam_caller.api_key and sarvam_caller.api_key != "<your-api-key>")
     return {
-        "service": "Sarvam AI Outbound Calling Agent",
+        "service": "Sarvam AI Voice Agent (Outbound & Inbound)",
         "configured": has_key,
         "mode": "live" if has_key else "simulation",
         "org_id": sarvam_caller.org_id,
@@ -44,6 +44,23 @@ async def trigger_outbound_call(payload: Dict[str, Any]):
     )
 
     result = await sarvam_caller.trigger_outbound_call(built_payload)
+    return result
+
+
+@router.post("/deploy-inbound")
+async def deploy_inbound_line(payload: Dict[str, Any] = None):
+    """Deploys an inbound phone line via Sarvam AI App Authoring API."""
+    data = payload or {}
+    built_payload = sarvam_caller.build_inbound_deployment_payload(
+        name=data.get("name", "My inbound line"),
+        description=data.get("description", "Inbound support line"),
+        phone_numbers=data.get("phone_numbers"),
+        start_time=data.get("start_time", "08:00"),
+        end_time=data.get("end_time", "20:00"),
+        allowed_days=data.get("allowed_days"),
+        timezone=data.get("timezone", "Asia/Kolkata"),
+    )
+    result = await sarvam_caller.deploy_inbound_line(built_payload)
     return result
 
 

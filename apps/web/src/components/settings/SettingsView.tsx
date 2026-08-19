@@ -279,16 +279,24 @@ export default function SettingsView() {
             </div>
 
             {/* Sarvam AI Telephony Engine Specs */}
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5 font-mono text-slate-600">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2 font-mono text-slate-600">
               <div className="flex items-center justify-between text-[11px] font-sans font-bold text-slate-800">
-                <span>⚡ Sarvam AI Telephony Engine</span>
+                <span>⚡ Sarvam AI Voice Engine &amp; Deployments</span>
                 <span className="px-2 py-0.5 rounded-full text-[9px] bg-emerald-100 text-emerald-800">API Connected</span>
               </div>
-              <div className="text-[10px] space-y-0.5">
-                <div>App ID: <strong className="text-slate-900">Conversatio-33fcb3f7-d1ed</strong> (v2)</div>
-                <div>Connection: <strong className="text-slate-900">Twilio-Gout-3b994781-e20a</strong></div>
-                <div>Agent Trunk: <strong className="text-slate-900">+1 (463) 262-0069</strong></div>
-                <div>Webhook Route: <strong className="text-slate-900">/api/calling/webhook</strong></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px]">
+                <div className="space-y-0.5">
+                  <div className="font-bold text-slate-800 font-sans">📞 Outbound Trunks:</div>
+                  <div>App ID: <strong className="text-slate-900">Conversatio-33fcb3f7-d1ed</strong> (v2)</div>
+                  <div>Trunk Phone: <strong className="text-slate-900">+1 (463) 262-0069</strong></div>
+                  <div>Connection: <strong className="text-slate-900">Twilio-Gout-3b994781-e20a</strong></div>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="font-bold text-slate-800 font-sans">📥 Inbound Deployment:</div>
+                  <div>Hours: <strong className="text-slate-900">08:00 - 20:00 (Asia/Kolkata)</strong></div>
+                  <div>Allowed Days: <strong className="text-slate-900">Mon - Fri</strong></div>
+                  <div>Deployment Route: <strong className="text-slate-900">/api/calling/inbound-deployment</strong></div>
+                </div>
               </div>
             </div>
 

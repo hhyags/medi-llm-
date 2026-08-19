@@ -1,13 +1,14 @@
 """
-MedVoice AI — Sarvam AI Outbound Calling Agent Client (Python)
-Provides server-to-server integration with Sarvam AI Voice Agent Outbounds API.
+MedVoice AI — Sarvam AI Calling Agent Client (Python)
+Provides server-to-server integration with Sarvam AI Voice Agent Outbounds & Inbound Deployments API.
 """
 
 import os
 import httpx
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
-DEFAULT_SARVAM_BASE_URL = "https://apps.sarvam.ai/api/outbounds/v1"
+DEFAULT_SARVAM_OUTBOUND_BASE_URL = "https://apps.sarvam.ai/api/outbounds/v1"
+DEFAULT_SARVAM_AUTHORING_BASE_URL = "https://apps.sarvam.ai/api/app-authoring/v1"
 DEFAULT_ORG_ID = "019f7ba2-e0db-7958-90f3-5fb0e88e242c"
 DEFAULT_WORKSPACE_ID = "019f7ba2-e0e6-7e90-9d38-59d0d0914051"
 DEFAULT_APP_ID = "Conversatio-33fcb3f7-d1ed"
@@ -35,7 +36,8 @@ class SarvamCallingClient:
         self.app_type = DEFAULT_APP_TYPE
         self.connection_id = connection_id or os.getenv("SARVAM_CONNECTION_ID", DEFAULT_CONNECTION_ID)
         self.agent_phone_number = agent_phone_number or os.getenv("SARVAM_AGENT_PHONE_NUMBER", DEFAULT_AGENT_PHONE_NUMBER)
-        self.base_url = f"{DEFAULT_SARVAM_BASE_URL}/orgs/{self.org_id}/workspaces/{self.workspace_id}/outbounds"
+        self.outbound_url = f"{DEFAULT_SARVAM_OUTBOUND_BASE_URL}/orgs/{self.org_id}/workspaces/{self.workspace_id}/outbounds"
+        self.deployment_url = f"{DEFAULT_SARVAM_AUTHORING_BASE_URL}/orgs/{self.org_id}/workspaces/{self.workspace_id}/deployments"
 
     def build_payload(
         self,
@@ -125,6 +127,36 @@ class SarvamCallingClient:
 
         return payload
 
+    def build_inbound_deployment_payload(
+        self,
+        name: str = "My inbound line",
+        description: str = "Inbound support line",
+        phone_numbers: Optional[List[str]] = None,
+        start_time: str = "08:00",
+        end_time: str = "20:00",
+        allowed_days: Optional[List[str]] = None,
+        timezone: str = "Asia/Kolkata",
+    ) -> Dict[str, Any]:
+        """Construct the Sarvam App Authoring Inbound Line Deployment payload."""
+        return {
+            "name": name,
+            "description": description,
+            "app_id": self.app_id,
+            "app_version": self.app_version,
+            "connection_configs": [
+                {
+                    "connection_id": self.connection_id,
+                    "phone_numbers": phone_numbers or [self.agent_phone_number],
+                }
+            ],
+            "inbound_config": {
+                "start_time": start_time,
+                "end_time": end_time,
+                "allowed_days": allowed_days or ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                "timezone": timezone,
+            },
+        }
+
     async def trigger_outbound_call(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Trigger an outbound call using Sarvam AI API."""
         if not self.api_key or self.api_key == "<your-api-key>":
@@ -143,13 +175,56 @@ class SarvamCallingClient:
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             try:
-                response = await client.post(self.base_url, headers=headers, json=payload)
+                response = await client.post(self.outbound_url, headers=headers, json=payload)
                 data = response.json()
                 if response.status_code in (200, 201):
                     return {
                         "success": True,
                         "outbound_id": data.get("outbound_id", data.get("id")),
                         "status": data.get("status", "queued"),
+                        "raw": data,
+                        "payload_sent": payload,
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "status_code": response.status_code,
+                        "error": data.get("message", response.text),
+                        "payload_sent": payload,
+                    }
+            except Exception as e:
+                return {
+                    "success": False,
+                    "error": str(e),
+                    "payload_sent": payload,
+                }
+
+    async def deploy_inbound_line(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Deploy an inbound line via Sarvam AI App Authoring API."""
+        if not self.api_key or self.api_key == "<your-api-key>":
+            return {
+                "success": True,
+                "mode": "simulation",
+                "deployment_id": f"sim_dep_{os.urandom(4).hex()}",
+                "status": "deployed_simulation",
+                "message": "Sarvam API Key not set; simulated inbound deployment created successfully.",
+                "payload_sent": payload,
+            }
+
+        headers = {
+            "Content-Type": "application/json",
+            "X-API-Key": self.api_key,
+        }
+
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            try:
+                response = await client.post(self.deployment_url, headers=headers, json=payload)
+                data = response.json()
+                if response.status_code in (200, 201):
+                    return {
+                        "success": True,
+                        "deployment_id": data.get("deployment_id", data.get("id")),
+                        "status": data.get("status", "deployed"),
                         "raw": data,
                         "payload_sent": payload,
                     }

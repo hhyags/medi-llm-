@@ -1,9 +1,9 @@
-// MedFlow AI CRM — Sarvam AI Outbound Calling Agent Service
-// Connects MedFlow CRM with Sarvam AI Voice Agent Outbounds API
+// MedFlow AI CRM — Sarvam AI Calling Agent Service
+// Connects MedFlow CRM with Sarvam AI Voice Agent Outbounds & Inbound Deployments API
 
 import { Appointment, Patient, Doctor, HospitalSettings, AICallingSettings, CallRecord, CallDialogueTurn, CallOutcome } from '../../types/medflow';
 
-// ─── Interfaces ──────────────────────────────────────────────────────────────
+// ─── Outbound Interfaces ──────────────────────────────────────────────────────
 
 export interface SarvamAgentVariables {
   appointmentDurationMinutes?: string;
@@ -103,10 +103,44 @@ export interface SarvamWebhookPayload {
   agent_variables?: Record<string, string>;
 }
 
+// ─── Inbound Deployment Interfaces ────────────────────────────────────────────
+
+export interface SarvamInboundConnectionConfig {
+  connection_id: string;
+  phone_numbers: string[];
+}
+
+export interface SarvamInboundTimingConfig {
+  start_time: string;
+  end_time: string;
+  allowed_days: string[];
+  timezone: string;
+}
+
+export interface SarvamInboundDeploymentPayload {
+  name: string;
+  description: string;
+  app_id: string;
+  app_version: number;
+  connection_configs: SarvamInboundConnectionConfig[];
+  inbound_config: SarvamInboundTimingConfig;
+}
+
+export interface SarvamInboundDeploymentResponse {
+  success: boolean;
+  deployment_id?: string;
+  status?: string;
+  message?: string;
+  error?: string;
+  payload_sent?: SarvamInboundDeploymentPayload;
+  raw_response?: any;
+}
+
 // ─── Default Configuration Constants ─────────────────────────────────────────
 
 export const SARVAM_DEFAULTS = {
-  BASE_URL: 'https://apps.sarvam.ai/api/outbounds/v1',
+  OUTBOUND_BASE_URL: 'https://apps.sarvam.ai/api/outbounds/v1',
+  AUTHORING_BASE_URL: 'https://apps.sarvam.ai/api/app-authoring/v1',
   ORG_ID: '019f7ba2-e0db-7958-90f3-5fb0e88e242c',
   WORKSPACE_ID: '019f7ba2-e0e6-7e90-9d38-59d0d0914051',
   APP_ID: 'Conversatio-33fcb3f7-d1ed',
@@ -115,7 +149,18 @@ export const SARVAM_DEFAULTS = {
   CONNECTION_ID: 'Twilio-Gout-3b994781-e20a',
   AGENT_PHONE_NUMBER: '+14632620069',
   INITIAL_STATE: 'entry',
-  DEFAULT_WEBHOOK_PATH: '/api/calling/webhook'
+  DEFAULT_WEBHOOK_PATH: '/api/calling/webhook',
+  INBOUND_TIMEZONE: 'Asia/Kolkata',
+  INBOUND_START_TIME: '08:00',
+  INBOUND_END_TIME: '20:00',
+  INBOUND_ALLOWED_DAYS: [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday'
+  ]
 };
 
 // ─── Service Class ────────────────────────────────────────────────────────────
@@ -133,10 +178,16 @@ class SarvamCallingService {
     return process.env.SARVAM_API_KEY || '';
   }
 
-  private getEndpointUrl(): string {
+  private getOutboundEndpointUrl(): string {
     const orgId = this.getOrgId();
     const workspaceId = this.getWorkspaceId();
-    return `${SARVAM_DEFAULTS.BASE_URL}/orgs/${orgId}/workspaces/${workspaceId}/outbounds`;
+    return `${SARVAM_DEFAULTS.OUTBOUND_BASE_URL}/orgs/${orgId}/workspaces/${workspaceId}/outbounds`;
+  }
+
+  private getDeploymentsEndpointUrl(): string {
+    const orgId = this.getOrgId();
+    const workspaceId = this.getWorkspaceId();
+    return `${SARVAM_DEFAULTS.AUTHORING_BASE_URL}/orgs/${orgId}/workspaces/${workspaceId}/deployments`;
   }
 
   /**
@@ -260,7 +311,7 @@ class SarvamCallingService {
    */
   public async initiateOutboundCall(payload: SarvamOutboundPayload): Promise<SarvamOutboundResponse> {
     const apiKey = this.getApiKey();
-    const endpoint = this.getEndpointUrl();
+    const endpoint = this.getOutboundEndpointUrl();
 
     // If no API key is provided, gracefully provide simulated success and diagnostic payload
     if (!apiKey || apiKey === '<your-api-key>') {
@@ -311,6 +362,108 @@ class SarvamCallingService {
       return {
         success: false,
         error: err.message || 'Failed to connect to Sarvam AI Outbounds endpoint.',
+        status: 'network_error',
+        payload_sent: payload
+      };
+    }
+  }
+
+  /**
+   * Builds the Sarvam Inbound Line Deployment payload
+   */
+  public buildInboundDeploymentPayload(params?: {
+    name?: string;
+    description?: string;
+    phoneNumbers?: string[];
+    startTime?: string;
+    endTime?: string;
+    allowedDays?: string[];
+    timezone?: string;
+    appId?: string;
+    connectionId?: string;
+  }): SarvamInboundDeploymentPayload {
+    const name = params?.name || 'MedFlow Inbound Hospital Reception Line';
+    const description = params?.description || 'AI-powered inbound appointment booking, triage and patient support line';
+    const phoneNumbers = params?.phoneNumbers || [SARVAM_DEFAULTS.AGENT_PHONE_NUMBER];
+    const startTime = params?.startTime || SARVAM_DEFAULTS.INBOUND_START_TIME;
+    const endTime = params?.endTime || SARVAM_DEFAULTS.INBOUND_END_TIME;
+    const allowedDays = params?.allowedDays || SARVAM_DEFAULTS.INBOUND_ALLOWED_DAYS;
+    const timezone = params?.timezone || SARVAM_DEFAULTS.INBOUND_TIMEZONE;
+    const appId = params?.appId || process.env.SARVAM_APP_ID || SARVAM_DEFAULTS.APP_ID;
+    const connectionId = params?.connectionId || process.env.SARVAM_CONNECTION_ID || SARVAM_DEFAULTS.CONNECTION_ID;
+
+    return {
+      name,
+      description,
+      app_id: appId,
+      app_version: SARVAM_DEFAULTS.APP_VERSION,
+      connection_configs: [
+        {
+          connection_id: connectionId,
+          phone_numbers: phoneNumbers
+        }
+      ],
+      inbound_config: {
+        start_time: startTime,
+        end_time: endTime,
+        allowed_days: allowedDays,
+        timezone: timezone
+      }
+    };
+  }
+
+  /**
+   * Deploys an Inbound Voice Line on Sarvam AI App Authoring API
+   */
+  public async deployInboundLine(payload: SarvamInboundDeploymentPayload): Promise<SarvamInboundDeploymentResponse> {
+    const apiKey = this.getApiKey();
+    const endpoint = this.getDeploymentsEndpointUrl();
+
+    if (!apiKey || apiKey === '<your-api-key>') {
+      return {
+        success: true,
+        deployment_id: `dep_sim_${Date.now()}`,
+        status: 'active_simulation',
+        message: 'Sarvam Inbound Line deployed in simulation mode (SARVAM_API_KEY not set). Live payload verified.',
+        payload_sent: payload
+      };
+    }
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': apiKey
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const responseData = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: responseData.message || responseData.error || `Sarvam Inbound Deployment API error: HTTP ${response.status}`,
+          status: 'failed',
+          payload_sent: payload,
+          raw_response: responseData
+        };
+      }
+
+      return {
+        success: true,
+        deployment_id: responseData.deployment_id || responseData.id || `dep_${Date.now()}`,
+        status: responseData.status || 'deployed',
+        message: 'Sarvam AI Inbound Line deployed successfully.',
+        payload_sent: payload,
+        raw_response: responseData
+      };
+    } catch (err: any) {
+      console.error('[SarvamCallingService] Network error deploying inbound line:', err);
+      return {
+        success: false,
+        error: err.message || 'Failed to connect to Sarvam AI App Authoring endpoint.',
         status: 'network_error',
         payload_sent: payload
       };
