@@ -1,0 +1,181 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- Helper Functions ---
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function getUserRole() {
+      return getUserData().role;
+    }
+    
+    function getUserHospitalId() {
+      return getUserData().hospitalId;
+    }
+    
+    function isSameHospital(docHospitalId) {
+      return isAuthenticated() && getUserHospitalId() == docHospitalId;
+    }
+    
+    function isAdmin(hospitalId) {
+      return isAuthenticated() && isSameHospital(hospitalId) && getUserRole() == 'admin';
+    }
+    
+    function isDoctor(hospitalId) {
+      return isAuthenticated() && isSameHospital(hospitalId) && (getUserRole() == 'doctor' || getUserRole() == 'admin');
+    }
+    
+    function isReceptionist(hospitalId) {
+      return isAuthenticated() && isSameHospital(hospitalId) && (getUserRole() == 'receptionist' || getUserRole() == 'admin');
+    }
+    
+    function isPatientOwner(hospitalId, patientId) {
+      return isAuthenticated() && isSameHospital(hospitalId) && (
+        request.auth.uid == patientId || 
+        getUserData().uid == patientId || 
+        getUserRole() == 'admin'
+      );
+    }
+
+    // --- Hospitals Collection ---
+    match /hospitals/{hospitalId} {
+      allow read: if isAuthenticated() && isSameHospital(hospitalId);
+      allow write: if isAdmin(hospitalId);
+    }
+
+    // --- Users Collection (UID as document ID) ---
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (
+        request.auth.uid == userId || 
+        isSameHospital(resource.data.hospitalId)
+      );
+      allow create, update: if isAuthenticated() && (
+        request.auth.uid == userId || 
+        isAdmin(request.resource.data.hospitalId)
+      );
+      allow delete: if isAdmin(resource.data.hospitalId);
+    }
+
+    // --- Patients Collection ---
+    match /patients/{patientId} {
+      allow read: if isAuthenticated() && (
+        isDoctor(resource.data.hospitalId) || 
+        isReceptionist(resource.data.hospitalId) || 
+        isPatientOwner(resource.data.hospitalId, resource.data.patientId)
+      );
+      allow create: if isReceptionist(request.resource.data.hospitalId) || isDoctor(request.resource.data.hospitalId);
+      // Validate BOTH old doc and new doc hospitalId to block hospitalId-swap attacks
+      allow update: if (isReceptionist(resource.data.hospitalId) || isDoctor(resource.data.hospitalId))
+                    && resource.data.hospitalId == request.resource.data.hospitalId;
+      allow delete: if isAdmin(resource.data.hospitalId);  
+    }
+
+    // --- Doctors Collection ---
+    match /doctors/{doctorId} {
+      allow read: if isAuthenticated() && isSameHospital(resource.data.hospitalId);
+      allow write: if isAdmin(request.resource.data.hospitalId);
+    }
+
+    // --- Appointments Collection ---
+    match /appointments/{appointmentId} {
+      allow read: if isAuthenticated() && (
+        isDoctor(resource.data.hospitalId) || 
+        isReceptionist(resource.data.hospitalId) || 
+        isPatientOwner(resource.data.hospitalId, resource.data.patientId)
+      );
+      allow create: if isReceptionist(request.resource.data.hospitalId) || isDoctor(request.resource.data.hospitalId);
+      // Validate BOTH old doc and new doc hospitalId to block hospitalId-swap attacks
+      allow update: if (isReceptionist(resource.data.hospitalId) || isDoctor(resource.data.hospitalId))
+                    && resource.data.hospitalId == request.resource.data.hospitalId;
+      allow delete: if isAdmin(resource.data.hospitalId);
+    }
+
+    // --- Consultations & Clinical Notes ---
+    match /consultations/{consultationId} {
+      allow read: if isAuthenticated() && (
+        isDoctor(resource.data.hospitalId) || 
+        isReceptionist(resource.data.hospitalId) || 
+        isPatientOwner(resource.data.hospitalId, resource.data.patientId)
+      );
+      allow create: if isDoctor(request.resource.data.hospitalId);
+      // Validate BOTH old doc and new doc hospitalId to block hospitalId-swap attacks
+      allow update: if isDoctor(resource.data.hospitalId)
+                    && resource.data.hospitalId == request.resource.data.hospitalId;
+      allow delete: if isAdmin(resource.data.hospitalId);
+    }
+
+    // --- Prescriptions ---
+    match /prescriptions/{prescriptionId} {
+      allow read: if isAuthenticated() && (
+        isDoctor(resource.data.hospitalId) || 
+        isReceptionist(resource.data.hospitalId) || 
+        isPatientOwner(resource.data.hospitalId, resource.data.patientId)
+      );
+      allow create: if isDoctor(request.resource.data.hospitalId);
+      // Validate BOTH old doc and new doc hospitalId to block hospitalId-swap attacks
+      allow update: if isDoctor(resource.data.hospitalId)
+                    && resource.data.hospitalId == request.resource.data.hospitalId;
+      allow delete: if isAdmin(resource.data.hospitalId);
+    }
+
+    // --- Laboratory Orders ---
+    match /labOrders/{labOrderId} {
+      allow read: if isAuthenticated() && (
+        isDoctor(resource.data.hospitalId) || 
+        isReceptionist(resource.data.hospitalId) || 
+        isPatientOwner(resource.data.hospitalId, resource.data.patientId)
+      );
+      allow create: if isDoctor(request.resource.data.hospitalId);
+      // Validate BOTH old doc and new doc hospitalId to block hospitalId-swap attacks
+      allow update: if isDoctor(resource.data.hospitalId)
+                    && resource.data.hospitalId == request.resource.data.hospitalId;
+      allow delete: if isAdmin(resource.data.hospitalId);
+    }
+
+    // --- Invoices & Billing ---
+    match /invoices/{invoiceId} {
+      allow read: if isAuthenticated() && (
+        isReceptionist(resource.data.hospitalId) || 
+        isAdmin(resource.data.hospitalId) || 
+        isPatientOwner(resource.data.hospitalId, resource.data.patientId)
+      );
+      allow create: if isReceptionist(request.resource.data.hospitalId) || isAdmin(request.resource.data.hospitalId);
+      // Validate BOTH old doc and new doc hospitalId to block hospitalId-swap attacks
+      allow update: if (isReceptionist(resource.data.hospitalId) || isAdmin(resource.data.hospitalId))
+                    && resource.data.hospitalId == request.resource.data.hospitalId;
+      allow delete: if isAdmin(resource.data.hospitalId);
+    }
+
+    // --- AI Voice Calls Collection ---
+    match /calls/{callId} {
+      allow read: if isAuthenticated() && (
+        isReceptionist(resource.data.hospitalId) || 
+        isDoctor(resource.data.hospitalId) || 
+        isAdmin(resource.data.hospitalId) || 
+        isPatientOwner(resource.data.hospitalId, resource.data.patientId)
+      );
+      allow create: if isReceptionist(request.resource.data.hospitalId) || isAdmin(request.resource.data.hospitalId);
+      // Validate BOTH old doc and new doc hospitalId to block hospitalId-swap attacks
+      allow update: if (isReceptionist(resource.data.hospitalId) || isAdmin(resource.data.hospitalId))
+                    && resource.data.hospitalId == request.resource.data.hospitalId;
+      allow delete: if isAdmin(resource.data.hospitalId);
+    }
+
+    // --- Notifications ---
+    match /notifications/{notificationId} {
+      allow read, write: if isAuthenticated() && isSameHospital(resource.data.hospitalId);
+    }
+
+    // --- Audit Logs ---
+    match /auditLogs/{logId} {
+      allow read: if isAdmin(resource.data.hospitalId);
+      allow create: if isAuthenticated() && isSameHospital(request.resource.data.hospitalId);
+    }
+  }
+}
