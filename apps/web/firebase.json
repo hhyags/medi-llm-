@@ -1,4 +1,16 @@
 {
+  "auth": {
+    "authorizedDomains": [
+      "localhost",
+      "127.0.0.1",
+      "medi-3faa5.firebaseapp.com",
+      "medi-3faa5.web.app"
+    ],
+    "providers": {
+      "emailPassword": true,
+      "googleSignIn": true
+    }
+  },
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"

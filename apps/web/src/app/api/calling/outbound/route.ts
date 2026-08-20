@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sarvamCallingService, SARVAM_DEFAULTS } from '../../../../lib/services/sarvamCallingService';
+import { checkRateLimit } from '../../../../lib/rateLimit';
 
 /**
  * POST /api/calling/outbound
@@ -7,6 +8,24 @@ import { sarvamCallingService, SARVAM_DEFAULTS } from '../../../../lib/services/
  */
 export async function POST(request: Request) {
   try {
+    const rateLimit = checkRateLimit(request, '/api/calling/outbound', { maxRequests: 20, windowMs: 60000 });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Outbound calling rate limit exceeded. Please wait before initiating more automated calls.'
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(rateLimit.resetSeconds),
+            'X-RateLimit-Limit': String(rateLimit.limit),
+            'X-RateLimit-Remaining': '0'
+          }
+        }
+      );
+    }
+
     const body = await request.json();
     const {
       targetPhone,

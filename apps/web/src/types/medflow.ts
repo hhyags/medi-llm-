@@ -40,9 +40,9 @@ export interface Patient {
   phone: string;
   email?: string;
   age: number;
-  gender: 'Male' | 'Female' | 'Other';
+  gender: 'Male' | 'Female' | 'Other' | 'male' | 'female' | 'other';
   bloodGroup?: string;
-  address: string;
+  address?: string;
   medicalNotes?: string;
   emergencyContact?: {
     name: string;
@@ -84,21 +84,23 @@ export interface Appointment {
   patientPhone: string;
   doctorId: string;
   doctorName: string;
-  doctorSpecialization: string;
-  department: string;
+  doctorSpecialization?: string;
+  doctorDepartment?: string;
+  department?: string;
   date: string; // YYYY-MM-DD
   time: string; // HH:mm
-  durationMinutes: number;
+  durationMinutes?: number;
   status: AppointmentStatus;
-  appointmentType: AppointmentType;
-  reason: string;
+  appointmentType?: AppointmentType | string;
+  type?: string;
+  reason?: string;
   notes?: string;
   cancellationReason?: string;
   rescheduledFrom?: {
     date: string;
     time: string;
   };
-  aiCallStatus?: 'pending' | 'completed' | 'failed' | 'in-progress';
+  aiCallStatus?: CallStatus;
   lastCallId?: string;
   createdAt: string;
   updatedAt: string;
@@ -185,8 +187,8 @@ export interface Invoice {
 }
 
 export type CallPurpose = 'appointment_confirmation' | 'appointment_reminder' | 'follow_up' | 'rescheduling' | 'cancellation_check';
-export type CallStatus = 'queued' | 'in-progress' | 'completed' | 'missed' | 'failed';
-export type CallOutcome = 'confirmed' | 'rescheduled' | 'cancelled' | 'callback_requested' | 'unanswered' | 'escalated_medical';
+export type CallStatus = 'not_started' | 'queued' | 'initiated' | 'ringing' | 'connected' | 'in_progress' | 'in-progress' | 'completed' | 'missed' | 'failed' | 'no_answer' | 'busy' | 'cancelled' | 'pending';
+export type CallOutcome = 'confirmed' | 'rescheduled' | 'cancelled' | 'callback_requested' | 'unanswered' | 'no_answer' | 'busy' | 'escalated_medical' | 'failed';
 
 export interface CallDialogueTurn {
   speaker: 'ai' | 'patient' | 'system';

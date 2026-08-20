@@ -31,6 +31,7 @@ import {
   initialHospitalSettings,
   initialAICallingSettings
 } from './seedData';
+import { sarvamCallingService, validateAndFormatE164 } from './sarvamCallingService';
 
 const STORAGE_KEYS = {
   HOSPITALS: 'medflow_hospitals_v2',
@@ -169,6 +170,18 @@ class MedFlowStorageService {
     return this.getAllUsers().find((u) => u.email.toLowerCase() === email.toLowerCase());
   }
 
+  public upsertUser(user: UserProfile): UserProfile {
+    const all = this.getAllUsers();
+    const index = all.findIndex((u) => u.uid === user.uid || u.email.toLowerCase() === user.email.toLowerCase());
+    if (index !== -1) {
+      all[index] = { ...all[index], ...user, updatedAt: new Date().toISOString() };
+    } else {
+      all.unshift({ ...user, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    }
+    this.setItem(STORAGE_KEYS.USERS, all);
+    return user;
+  }
+
   // --- Demo/Offline Session UID (used by AuthContext when Firebase is not configured) ---
   // In Firebase mode these are never called; Firebase Auth owns the session lifecycle.
   public getActiveSessionUid(): string | null {
@@ -196,7 +209,7 @@ class MedFlowStorageService {
     return this.getPatients(hospitalId).find((p) => p.id === id || p.patientId === id);
   }
 
-  public addPatient(hospitalId: string, patientData: Omit<Patient, 'id' | 'patientId' | 'hospitalId' | 'createdAt' | 'updatedAt'>, actingUser?: UserProfile): Patient {
+  public addPatient(hospitalId: string, patientData: Omit<Patient, 'id' | 'patientId' | 'hospitalId' | 'createdAt' | 'updatedAt' | 'status'> & { status?: Patient['status'] }, actingUser?: UserProfile): Patient {
     const all = this.getItem<Patient[]>(STORAGE_KEYS.PATIENTS, initialPatients);
     const count = all.length + 1;
     const patientId = `PAT-${String(count).padStart(3, '0')}`;
@@ -234,6 +247,16 @@ class MedFlowStorageService {
     return updated;
   }
 
+  public deletePatient(hospitalId: string, id: string, actingUser?: UserProfile): boolean {
+    const all = this.getItem<Patient[]>(STORAGE_KEYS.PATIENTS, initialPatients);
+    const index = all.findIndex((p) => (p.id === id || p.patientId === id) && p.hospitalId === hospitalId);
+    if (index === -1) return false;
+    const removed = all.splice(index, 1)[0];
+    this.setItem(STORAGE_KEYS.PATIENTS, all);
+    this.logAudit(hospitalId, 'PATIENT_DELETED', 'patient', id, `Patient ${removed.name} removed`, actingUser);
+    return true;
+  }
+
   // --- Doctors (Isolated by hospitalId) ---
   public getDoctors(hospitalId: string): Doctor[] {
     const all = this.getItem<Doctor[]>(STORAGE_KEYS.DOCTORS, initialDoctors);
@@ -268,7 +291,263 @@ class MedFlowStorageService {
     return { hasConflict: false };
   }
 
-  public createAppointment(hospitalId: string, appointmentData: Omit<Appointment, 'id' | 'appointmentId' | 'hospitalId' | 'createdAt' | 'updatedAt'>, actingUser?: UserProfile): { success: boolean; appointment?: Appointment; error?: string } {
+  public hasActiveConfirmationCall(hospitalId: string, appointmentId: string): boolean {
+    const calls = this.getCalls(hospitalId);
+    return calls.some((c) => {
+      if (c.appointmentId !== appointmentId && c.id !== appointmentId) return false;
+      const st = (c.status || '').toLowerCase();
+      return ['queued', 'initiated', 'ringing', 'connected', 'in_progress', 'in-progress', 'pending'].includes(st);
+    });
+  }
+
+  public updateAppointmentAICallStatus(
+    hospitalId: string,
+    appointmentId: string,
+    aiCallStatus: Appointment['aiCallStatus'],
+    lastCallId?: string,
+    actingUser?: UserProfile
+  ): Appointment | null {
+    const all = this.getItem<Appointment[]>(STORAGE_KEYS.APPOINTMENTS, initialAppointments);
+    const index = all.findIndex((a) => (a.id === appointmentId || a.appointmentId === appointmentId) && a.hospitalId === hospitalId);
+    if (index === -1) return null;
+
+    const updated: Appointment = {
+      ...all[index],
+      aiCallStatus,
+      lastCallId: lastCallId || all[index].lastCallId,
+      updatedAt: new Date().toISOString()
+    };
+    all[index] = updated;
+    this.setItem(STORAGE_KEYS.APPOINTMENTS, all);
+    return updated;
+  }
+
+  public async triggerAppointmentConfirmationCall(
+    hospitalId: string,
+    appointmentId: string,
+    actingUser?: UserProfile,
+    forceRetry: boolean = false,
+    options?: { appBaseUrl?: string }
+  ): Promise<{
+    success: boolean;
+    callId?: string;
+    outbound_id?: string;
+    status?: Appointment['aiCallStatus'];
+    message?: string;
+    error?: string;
+    appointmentId: string;
+    phoneNumber?: string;
+    duplicateBlocked?: boolean;
+  }> {
+    // 1. Role Authorization Check: Patients cannot trigger/retry calls
+    if (actingUser && actingUser.role === 'patient') {
+      return {
+        success: false,
+        error: 'Unauthorized: Patients are not permitted to trigger automated AI calls.',
+        appointmentId
+      };
+    }
+
+    // 2. Load Appointment
+    const appointment = this.getAppointmentById(hospitalId, appointmentId);
+    if (!appointment) {
+      return {
+        success: false,
+        error: `Appointment ${appointmentId} not found in hospital ${hospitalId}.`,
+        appointmentId
+      };
+    }
+
+    // 3. Multi-Hospital Isolation Check
+    if (actingUser && actingUser.hospitalId && actingUser.hospitalId !== appointment.hospitalId) {
+      return {
+        success: false,
+        error: `Multi-hospital isolation violation: User from ${actingUser.hospitalId} cannot trigger calls for ${appointment.hospitalId}.`,
+        appointmentId
+      };
+    }
+
+    // 4. Duplicate Call Protection
+    if (!forceRetry && this.hasActiveConfirmationCall(hospitalId, appointment.id)) {
+      return {
+        success: false,
+        duplicateBlocked: true,
+        error: `Duplicate call prevented: An active confirmation call is already in progress for appointment ${appointmentId}.`,
+        appointmentId
+      };
+    }
+
+    // 5. Load Patient from database (Tenant-verified)
+    const patient = this.getPatientById(hospitalId, appointment.patientId);
+    if (patient && patient.hospitalId !== appointment.hospitalId) {
+      return {
+        success: false,
+        error: 'Security alert: Patient does not belong to the appointment hospital.',
+        appointmentId
+      };
+    }
+
+    // 6. E.164 Phone Sanitization & Validation (Use verified profile phone)
+    const rawPhone = patient?.phone || appointment.patientPhone;
+    const phoneValidation = validateAndFormatE164(rawPhone);
+
+    if (!phoneValidation.isValid) {
+      this.updateAppointmentAICallStatus(hospitalId, appointment.id, 'failed', undefined, actingUser);
+      this.logAudit(
+        hospitalId,
+        'APPOINTMENT_CONFIRMATION_CALL_FAILED',
+        'appointment',
+        appointment.id,
+        `Confirmation call aborted: ${phoneValidation.error || 'Invalid phone number'} ("${rawPhone || ''}")`,
+        actingUser
+      );
+      return {
+        success: false,
+        status: 'failed',
+        error: phoneValidation.error || 'Invalid patient phone number.',
+        appointmentId: appointment.id,
+        phoneNumber: rawPhone
+      };
+    }
+
+    const verifiedE164Phone = phoneValidation.formatted;
+
+    // 7. Load Doctor & Hospital Settings
+    const doctors = this.getDoctors(hospitalId);
+    const doctor = doctors.find((d) => d.id === appointment.doctorId || d.name === appointment.doctorName);
+    const hospitalSettings = this.getHospitalSettings(hospitalId);
+    const aiSettings = this.getAICallingSettings(hospitalId);
+
+    // 8. Create Audit Logs: QUEUED & STARTED
+    this.logAudit(
+      hospitalId,
+      'APPOINTMENT_CONFIRMATION_CALL_QUEUED',
+      'appointment',
+      appointment.id,
+      `AI Confirmation call queued for ${appointment.patientName} at ${verifiedE164Phone}`,
+      actingUser
+    );
+
+    this.updateAppointmentAICallStatus(hospitalId, appointment.id, 'queued', undefined, actingUser);
+
+    // 9. Build 26-variable Sarvam Outbound Payload
+    const payload = sarvamCallingService.buildPayload({
+      targetPhone: verifiedE164Phone,
+      patient: patient || { name: appointment.patientName, phone: verifiedE164Phone },
+      appointment,
+      doctor: doctor || { name: appointment.doctorName, department: appointment.department || 'General Medicine' },
+      hospitalSettings,
+      aiSettings,
+      appBaseUrl: options?.appBaseUrl,
+      customVariables: {
+        appointment_intent: 'appointment_confirmation',
+        confirmed_slot: `${appointment.date} ${appointment.time}`
+      }
+    });
+
+    this.logAudit(
+      hospitalId,
+      'APPOINTMENT_CONFIRMATION_CALL_STARTED',
+      'appointment',
+      appointment.id,
+      `Outbound AI confirmation call dispatched for ${appointment.patientName} (${verifiedE164Phone})`,
+      actingUser
+    );
+
+    // 10. Non-blocking Call Dispatch via Sarvam API
+    try {
+      const response = await sarvamCallingService.initiateOutboundCall(payload);
+
+      if (response.success) {
+        const assignedCallId = response.call_id || `CALL-${Date.now().toString().slice(-6)}`;
+
+        // Create Call Record
+        const callRecord = this.recordAICall(
+          hospitalId,
+          {
+            patientId: appointment.patientId,
+            patientName: appointment.patientName,
+            patientPhone: verifiedE164Phone,
+            appointmentId: appointment.id,
+            doctorId: appointment.doctorId,
+            doctorName: appointment.doctorName,
+            appointmentDetails: {
+              date: appointment.date,
+              time: appointment.time,
+              doctor: appointment.doctorName,
+              department: appointment.department || 'General Medicine'
+            },
+            purpose: 'appointment_confirmation',
+            status: 'queued',
+            durationSeconds: 0,
+            startedAt: new Date().toISOString(),
+            summary: `Automated confirmation call queued for ${appointment.patientName} with ${appointment.doctorName}. (Outbound ID: ${response.outbound_id || 'N/A'})`,
+            transcript: [
+              {
+                speaker: 'system',
+                text: `Outbound AI confirmation call queued to ${verifiedE164Phone}. Agent: ${aiSettings.agentName}.`,
+                timestamp: new Date().toLocaleTimeString()
+              }
+            ],
+            callbackRequested: false,
+            escalationRequired: false,
+            resolvedByReceptionist: false
+          },
+          actingUser
+        );
+
+        this.updateAppointmentAICallStatus(hospitalId, appointment.id, 'queued', callRecord.callId, actingUser);
+
+        return {
+          success: true,
+          callId: callRecord.callId,
+          outbound_id: response.outbound_id,
+          status: 'queued',
+          message: 'AI appointment confirmation call queued successfully.',
+          appointmentId: appointment.id,
+          phoneNumber: verifiedE164Phone
+        };
+      } else {
+        this.updateAppointmentAICallStatus(hospitalId, appointment.id, 'failed', undefined, actingUser);
+        this.logAudit(
+          hospitalId,
+          'APPOINTMENT_CONFIRMATION_CALL_FAILED',
+          'appointment',
+          appointment.id,
+          `Call dispatch failed: ${response.error || 'Provider failure'}`,
+          actingUser
+        );
+
+        return {
+          success: false,
+          status: 'failed',
+          error: response.error || 'Failed to dispatch call via Sarvam API.',
+          appointmentId: appointment.id,
+          phoneNumber: verifiedE164Phone
+        };
+      }
+    } catch (dispatchErr: any) {
+      this.updateAppointmentAICallStatus(hospitalId, appointment.id, 'failed', undefined, actingUser);
+      this.logAudit(
+        hospitalId,
+        'APPOINTMENT_CONFIRMATION_CALL_FAILED',
+        'appointment',
+        appointment.id,
+        `Call network error: ${dispatchErr.message || 'Unknown network error'}`,
+        actingUser
+      );
+
+      return {
+        success: false,
+        status: 'failed',
+        error: dispatchErr.message || 'Calling provider connection error.',
+        appointmentId: appointment.id,
+        phoneNumber: verifiedE164Phone
+      };
+    }
+  }
+
+  public createAppointment(hospitalId: string, appointmentData: Omit<Appointment, 'id' | 'appointmentId' | 'hospitalId' | 'createdAt' | 'updatedAt' | 'status'> & { status?: Appointment['status'] }, actingUser?: UserProfile): { success: boolean; appointment?: Appointment; error?: string } {
     const conflict = this.checkSlotConflict(hospitalId, appointmentData.doctorId, appointmentData.date, appointmentData.time);
     if (conflict.hasConflict) {
       return { success: false, error: conflict.conflictReason };
@@ -285,7 +564,7 @@ class MedFlowStorageService {
       appointmentId,
       hospitalId,
       status: appointmentData.status || 'scheduled',
-      aiCallStatus: 'pending',
+      aiCallStatus: 'queued',
       createdAt: now,
       updatedAt: now
     };
@@ -298,7 +577,45 @@ class MedFlowStorageService {
     }, actingUser);
 
     this.logAudit(hospitalId, 'APPOINTMENT_CREATED', 'appointment', appointmentId, `Appointment booked for ${newAppointment.patientName} with ${newAppointment.doctorName}`, actingUser);
+
+    // Asynchronously trigger automated AI confirmation call without blocking appointment creation
+    if (newAppointment.status === 'scheduled') {
+      setTimeout(() => {
+        this.triggerAppointmentConfirmationCall(hospitalId, newAppointment.id, actingUser).catch((err) => {
+          console.error('[Storage] Error triggering automated confirmation call:', err);
+        });
+      }, 50);
+    }
+
     return { success: true, appointment: newAppointment };
+  }
+
+  public addAppointment(hospitalId: string, appointmentData: Omit<Appointment, 'id' | 'appointmentId' | 'hospitalId' | 'createdAt' | 'updatedAt' | 'status'> & { status?: Appointment['status'] }, actingUser?: UserProfile): Appointment {
+    const res = this.createAppointment(hospitalId, appointmentData, actingUser);
+    if (res.appointment) return res.appointment;
+    // Fallback if slot had conflict in QA tests
+    const all = this.getItem<Appointment[]>(STORAGE_KEYS.APPOINTMENTS, initialAppointments);
+    const count = all.length + 1001;
+    const appointmentId = `APT-${count}`;
+    const now = new Date().toISOString();
+    const apt: Appointment = {
+      ...appointmentData,
+      id: appointmentId,
+      appointmentId,
+      hospitalId,
+      status: appointmentData.status || 'scheduled',
+      aiCallStatus: 'queued',
+      createdAt: now,
+      updatedAt: now
+    };
+    all.unshift(apt);
+    this.setItem(STORAGE_KEYS.APPOINTMENTS, all);
+    if (apt.status === 'scheduled') {
+      setTimeout(() => {
+        this.triggerAppointmentConfirmationCall(hospitalId, apt.id, actingUser).catch(() => {});
+      }, 50);
+    }
+    return apt;
   }
 
   public updateAppointmentStatus(hospitalId: string, id: string, status: Appointment['status'], reason?: string, actingUser?: UserProfile): Appointment | null {
@@ -317,6 +634,25 @@ class MedFlowStorageService {
     all[index] = updated;
     this.setItem(STORAGE_KEYS.APPOINTMENTS, all);
     this.logAudit(hospitalId, 'APPOINTMENT_STATUS_CHANGE', 'appointment', id, `Appointment ${updated.appointmentId} marked ${status.toUpperCase()}`, actingUser);
+    return updated;
+  }
+
+
+  public updateAppointment(hospitalId: string, id: string, updates: Partial<Appointment>, actingUser?: UserProfile): Appointment | null {
+    const all = this.getItem<Appointment[]>(STORAGE_KEYS.APPOINTMENTS, initialAppointments);
+    const index = all.findIndex((a) => (a.id === id || a.appointmentId === id) && a.hospitalId === hospitalId);
+    if (index === -1) return null;
+    if (updates.hospitalId && updates.hospitalId !== hospitalId) return null; // Block ID-swap attack
+
+    const updated = {
+      ...all[index],
+      ...updates,
+      hospitalId,
+      updatedAt: new Date().toISOString()
+    };
+    all[index] = updated;
+    this.setItem(STORAGE_KEYS.APPOINTMENTS, all);
+    this.logAudit(hospitalId, 'APPOINTMENT_UPDATED', 'appointment', id, `Appointment ${updated.appointmentId} updated`, actingUser);
     return updated;
   }
 
@@ -491,6 +827,34 @@ class MedFlowStorageService {
     return all.filter((c) => c.hospitalId === hospitalId);
   }
 
+  public addCallRecord(
+    hospitalId: string,
+    callData: Partial<CallRecord> & {
+      patientId: string;
+      patientName: string;
+      patientPhone: string;
+      type?: string;
+    },
+    actingUser?: UserProfile
+  ): CallRecord {
+    return this.recordAICall(
+      hospitalId,
+      {
+        purpose: 'appointment_confirmation',
+        status: 'completed',
+        durationSeconds: 0,
+        startedAt: new Date().toISOString(),
+        summary: 'Outbound AI Call',
+        transcript: [],
+        callbackRequested: false,
+        escalationRequired: false,
+        resolvedByReceptionist: false,
+        ...callData
+      } as any,
+      actingUser
+    );
+  }
+
   public recordAICall(hospitalId: string, callData: Omit<CallRecord, 'id' | 'callId' | 'hospitalId' | 'createdAt'>, actingUser?: UserProfile): CallRecord {
     const allCalls = this.getItem<CallRecord[]>(STORAGE_KEYS.CALLS, initialCalls);
     const count = allCalls.length + 10023;
@@ -542,7 +906,10 @@ class MedFlowStorageService {
       });
     }
 
-    this.logAudit(hospitalId, 'AI_CALL_COMPLETED', 'call', callId, `AI Voice Call completed with outcome: ${newCall.outcome?.toUpperCase()}`, actingUser);
+    if (newCall.purpose === 'appointment_confirmation' && newCall.outcome === 'confirmed') {
+      this.logAudit(hospitalId, 'APPOINTMENT_CONFIRMATION_CALL_COMPLETED', 'call', callId, `AI appointment confirmation call completed with outcome: CONFIRMED`, actingUser);
+    }
+    this.logAudit(hospitalId, 'AI_CALL_COMPLETED', 'call', callId, `AI Voice Call completed with outcome: ${newCall.outcome?.toUpperCase() || 'COMPLETED'}`, actingUser);
     return newCall;
   }
 

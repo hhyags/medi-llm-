@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useMedFlow } from '../../context/MedFlowContext';
+import { useAuth } from '../../context/AuthContext';
 import { AppointmentStatus, Appointment } from '../../types/medflow';
 import {
   Calendar,
@@ -16,10 +17,12 @@ import {
   User,
   Stethoscope,
   ChevronRight,
-  AlertCircle
+  AlertCircle,
+  RotateCcw
 } from 'lucide-react';
 
 export default function AppointmentsView() {
+  const { profile } = useAuth();
   const {
     appointments,
     doctors,
@@ -27,13 +30,30 @@ export default function AppointmentsView() {
     setSelectedPatientId,
     setRescheduleAppointmentData,
     openCallModal,
-    updateAppointmentStatus
+    updateAppointmentStatus,
+    triggerAppointmentConfirmationCall
   } = useMedFlow();
 
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [doctorFilter, setDoctorFilter] = useState<string>('ALL');
   const [cancellingAptId, setCancellingAptId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState('Patient requested cancellation');
+  const [retryingAptId, setRetryingAptId] = useState<string | null>(null);
+
+  const canRetryCall = profile?.role === 'admin' || profile?.role === 'receptionist';
+
+  const handleRetryCall = async (aptId: string) => {
+    if (!canRetryCall) return;
+    setRetryingAptId(aptId);
+    try {
+      await triggerAppointmentConfirmationCall(aptId, true);
+    } catch (err) {
+      console.error('Error retrying AI call:', err);
+    } finally {
+      setRetryingAptId(null);
+    }
+  };
+
 
   const filteredAppointments = appointments.filter((apt) => {
     const matchesStatus = statusFilter === 'ALL' || apt.status === statusFilter;
@@ -219,7 +239,45 @@ export default function AppointmentsView() {
                       Cancellation: {apt.cancellationReason}
                     </p>
                   )}
+
+                  {/* AI Confirmation Status Badge */}
+                  <div className="flex items-center gap-2 pt-1 flex-wrap">
+                    {apt.status === 'confirmed' ? (
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                        <Check className="w-2.5 h-2.5" /> AI Confirmed
+                      </span>
+                    ) : apt.aiCallStatus === 'queued' ? (
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+                        <Clock className="w-2.5 h-2.5" /> AI Confirmation: Queued...
+                      </span>
+                    ) : apt.aiCallStatus === 'initiated' || apt.aiCallStatus === 'ringing' || apt.aiCallStatus === 'in_progress' || apt.aiCallStatus === 'in-progress' ? (
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-sky-50 text-sky-700 border border-sky-200 flex items-center gap-1 animate-pulse">
+                        <PhoneCall className="w-2.5 h-2.5" /> AI Calling...
+                      </span>
+                    ) : apt.aiCallStatus === 'connected' ? (
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center gap-1">
+                        <PhoneCall className="w-2.5 h-2.5" /> AI Connected
+                      </span>
+                    ) : (apt.aiCallStatus === 'failed' || apt.aiCallStatus === 'no_answer' || apt.aiCallStatus === 'busy') ? (
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1">
+                          <AlertCircle className="w-2.5 h-2.5" /> AI Call: {apt.aiCallStatus === 'no_answer' ? 'No Answer' : 'Failed'}
+                        </span>
+                        {canRetryCall && apt.status === 'scheduled' && (
+                          <button
+                            onClick={() => handleRetryCall(apt.id)}
+                            disabled={retryingAptId === apt.id}
+                            className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 flex items-center gap-1 transition-colors"
+                          >
+                            <RotateCcw className={`w-2.5 h-2.5 ${retryingAptId === apt.id ? 'animate-spin' : ''}`} />
+                            {retryingAptId === apt.id ? 'Retrying...' : 'Retry AI Call'}
+                          </button>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
+
 
               </div>
 

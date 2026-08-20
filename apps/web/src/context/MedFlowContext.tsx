@@ -80,6 +80,7 @@ interface MedFlowContextType {
   updateInvoiceStatus: (id: string, status: Invoice['status'], paymentMethod?: Invoice['paymentMethod']) => void;
 
   recordAICall: (data: Omit<CallRecord, 'id' | 'callId' | 'hospitalId' | 'createdAt'>) => CallRecord;
+  triggerAppointmentConfirmationCall: (appointmentId: string, forceRetry?: boolean) => Promise<{ success: boolean; callId?: string; status?: Appointment['aiCallStatus']; error?: string; duplicateBlocked?: boolean }>;
   resolveCallback: (callId: string) => void;
   markNotificationAsRead: (id: string) => void;
 
@@ -216,6 +217,10 @@ export function MedFlowProvider({ children }: { children: React.ReactNode }) {
     return storageService.recordAICall(hospitalId, data, profile || undefined);
   };
 
+  const triggerAppointmentConfirmationCall = async (appointmentId: string, forceRetry: boolean = false) => {
+    return storageService.triggerAppointmentConfirmationCall(hospitalId, appointmentId, profile || undefined, forceRetry);
+  };
+
   const resolveCallback = (callId: string) => {
     storageService.resolveCallback(hospitalId, callId, profile || undefined);
   };
@@ -281,6 +286,7 @@ export function MedFlowProvider({ children }: { children: React.ReactNode }) {
         addInvoice,
         updateInvoiceStatus,
         recordAICall,
+        triggerAppointmentConfirmationCall,
         resolveCallback,
         markNotificationAsRead,
         updateHospitalSettings,

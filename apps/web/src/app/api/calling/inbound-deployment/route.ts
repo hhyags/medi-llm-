@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sarvamCallingService, SARVAM_DEFAULTS } from '../../../../lib/services/sarvamCallingService';
+import { checkRateLimit } from '../../../../lib/rateLimit';
 
 /**
  * POST /api/calling/inbound-deployment
@@ -7,6 +8,14 @@ import { sarvamCallingService, SARVAM_DEFAULTS } from '../../../../lib/services/
  */
 export async function POST(request: Request) {
   try {
+    const rateLimit = checkRateLimit(request, '/api/calling/inbound-deployment', { maxRequests: 30, windowMs: 60000 });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { success: false, error: 'Inbound deployment rate limit exceeded.' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json().catch(() => ({}));
     const {
       name,

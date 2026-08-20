@@ -1,7 +1,26 @@
 import { NextResponse } from 'next/server';
+import { checkRateLimit } from '../../../lib/rateLimit';
 
 export async function POST(request: Request) {
   try {
+    const rateLimit = checkRateLimit(request, '/api/chat', { maxRequests: 30, windowMs: 60000 });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          response: 'Rate limit exceeded. Please wait a moment before sending more messages.',
+          action_taken: 'RATE_LIMITED'
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(rateLimit.resetSeconds),
+            'X-RateLimit-Limit': String(rateLimit.limit),
+            'X-RateLimit-Remaining': '0'
+          }
+        }
+      );
+    }
+
     const body = await request.json();
     const { message, session_id } = body;
 
@@ -32,7 +51,12 @@ export async function POST(request: Request) {
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: {
+        'X-RateLimit-Limit': String(rateLimit.limit),
+        'X-RateLimit-Remaining': String(rateLimit.remaining),
+      }
+    });
   } catch (error: any) {
     console.error('Error in chat proxy API:', error);
     return NextResponse.json({

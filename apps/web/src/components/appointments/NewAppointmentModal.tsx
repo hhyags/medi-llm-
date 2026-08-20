@@ -65,13 +65,13 @@ export default function NewAppointmentModal() {
       return;
     }
 
-    setSuccessMsg('Appointment successfully scheduled!');
+    setSuccessMsg('Appointment Created ✓ — AI confirmation call queued...');
     setTimeout(() => {
       setIsNewAppointmentOpen(false);
       setSuccessMsg('');
       setReason('');
       setNotes('');
-    }, 1000);
+    }, 1800);
   };
 
   return (
