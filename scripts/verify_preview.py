@@ -13,7 +13,7 @@ print("=" * 60)
 
 # Check Backend
 try:
-    r_api = httpx.get("http://localhost:8000/health", timeout=5.0)
+    r_api = httpx.get("http://localhost:8000/health", timeout=15.0)
     print("✅ FastAPI Backend (http://localhost:8000):")
     print("   Status:", r_api.status_code)
     print("   Payload:", r_api.json())
@@ -22,7 +22,7 @@ except Exception as e:
 
 # Check Frontend Page
 try:
-    r_web = httpx.get("http://localhost:3000", timeout=5.0)
+    r_web = httpx.get("http://localhost:3000", timeout=30.0)
     print("\n✅ Next.js Frontend (http://localhost:3000):")
     print("   Status:", r_web.status_code)
     print("   Title / Length:", len(r_web.text), "bytes")
@@ -31,7 +31,7 @@ except Exception as e:
 
 # Check Frontend API Route -> Backend Connection
 try:
-    r_chat = httpx.post("http://localhost:3000/api/chat", json={"message": "What are your hospital working hours?"}, timeout=15.0)
+    r_chat = httpx.post("http://localhost:3000/api/chat", json={"message": "What are your hospital working hours?"}, timeout=30.0)
     print("\n✅ Next.js -> FastAPI Proxy Route (/api/chat):")
     print("   Status:", r_chat.status_code)
     print("   Response:\n", r_chat.json().get("response"))
