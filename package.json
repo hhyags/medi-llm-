@@ -2,9 +2,12 @@
   "name": "medvoice-ai-monorepo",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "dev": "npm --prefix apps/web run dev",
-    "build": "npm --prefix apps/web run build",
+    "build": "cd apps/web && npm install && npm run build",
     "start": "npm --prefix apps/web run start",
     "lint": "npm --prefix apps/web run lint"
   }
