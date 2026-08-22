@@ -161,7 +161,7 @@ export default function AICallingView() {
 
           {inboundDeployMessage && (
             <p className="text-[11px] font-mono text-emerald-400 pt-0.5">
-              ✅ {inboundDeployMessage}
+              ✅ {typeof inboundDeployMessage === 'object' ? (inboundDeployMessage as any)?.message || JSON.stringify(inboundDeployMessage) : String(inboundDeployMessage)}
             </p>
           )}
         </div>

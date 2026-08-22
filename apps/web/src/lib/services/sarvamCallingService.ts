@@ -52,11 +52,23 @@ export function validateAndFormatE164(phone?: string | null): { isValid: boolean
   else if (digitsOnly.length >= 10 && digitsOnly.length <= 15) {
     formatted = `+${digitsOnly}`;
   }
-  else {
-    return { isValid: false, formatted: '', error: `Phone number length (${digitsOnly.length}) out of valid E.164 range (10-15 digits).` };
-  }
-
   return { isValid: true, formatted };
+}
+
+export function formatApiErrorMessage(data: any, fallback: string): string {
+  if (!data) return fallback;
+  if (typeof data === 'string') return data;
+  if (typeof data.error === 'string') return data.error;
+  if (typeof data.error?.message === 'string') return data.error.message;
+  if (typeof data.message === 'string') return data.message;
+  if (typeof data.msg === 'string') return data.msg;
+  if (typeof data.detail === 'string') return data.detail;
+  if (typeof data.error === 'object' && data.error?.detail) return String(data.error.detail);
+  try {
+    return JSON.stringify(data.error || data.message || data);
+  } catch {
+    return fallback;
+  }
 }
 
 // ─── Outbound Interfaces ──────────────────────────────────────────────────────
@@ -410,7 +422,7 @@ class SarvamCallingService {
         }
         return {
           success: false,
-          error: responseData.message || responseData.error || `Sarvam API error: HTTP ${response.status}`,
+          error: formatApiErrorMessage(responseData, `Sarvam API error: HTTP ${response.status}`),
           status: 'failed',
           payload_sent: payload,
           raw_response: responseData
@@ -533,7 +545,7 @@ class SarvamCallingService {
         }
         return {
           success: false,
-          error: responseData.message || responseData.error || `Sarvam Inbound Deployment API error: HTTP ${response.status}`,
+          error: formatApiErrorMessage(responseData, `Sarvam Inbound Deployment API error: HTTP ${response.status}`),
           status: 'failed',
           payload_sent: payload,
           raw_response: responseData

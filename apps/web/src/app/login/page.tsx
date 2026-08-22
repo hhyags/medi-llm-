@@ -145,7 +145,7 @@ export default function LoginPage() {
           {error && (
             <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-              <span>{error}</span>
+              <span>{typeof error === 'object' ? (error as any)?.message || JSON.stringify(error) : String(error)}</span>
             </div>
           )}
 

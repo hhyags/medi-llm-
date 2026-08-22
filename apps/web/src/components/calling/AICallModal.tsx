@@ -169,11 +169,14 @@ export default function AICallModal() {
         });
       } else {
         setSarvamCallStatus('failed');
-        setSarvamError(data.error || 'Failed to initiate outbound call via Sarvam AI API.');
+        const rawErr = data.error || 'Failed to initiate outbound call via Sarvam AI API.';
+        const errText = typeof rawErr === 'object' ? (rawErr.message || JSON.stringify(rawErr)) : String(rawErr);
+        setSarvamError(errText);
       }
     } catch (err: any) {
       setSarvamCallStatus('failed');
-      setSarvamError(err.message || 'Network error while contacting /api/calling/outbound.');
+      const errText = err?.message || (typeof err === 'object' ? JSON.stringify(err) : String(err)) || 'Network error while contacting /api/calling/outbound.';
+      setSarvamError(errText);
     } finally {
       setIsDispatchingSarvam(false);
     }
@@ -664,7 +667,7 @@ export default function AICallModal() {
               {sarvamError && (
                 <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-800 text-xs text-rose-300 flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
-                  <span>{sarvamError}</span>
+                  <span>{typeof sarvamError === 'object' ? (sarvamError as any)?.message || JSON.stringify(sarvamError) : String(sarvamError)}</span>
                 </div>
               )}
             </div>
@@ -694,14 +697,14 @@ export default function AICallModal() {
 
                   {sarvamResponse?.outbound_id && (
                     <span className="text-[10px] text-slate-400 font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
-                      ID: {sarvamResponse.outbound_id}
+                      ID: {typeof sarvamResponse.outbound_id === 'object' ? JSON.stringify(sarvamResponse.outbound_id) : String(sarvamResponse.outbound_id)}
                     </span>
                   )}
                 </div>
 
                 {sarvamResponse?.message && (
                   <p className="text-xs text-slate-300 font-medium bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
-                    {sarvamResponse.message}
+                    {typeof sarvamResponse.message === 'object' ? (sarvamResponse.message as any)?.message || JSON.stringify(sarvamResponse.message) : String(sarvamResponse.message)}
                   </p>
                 )}
 

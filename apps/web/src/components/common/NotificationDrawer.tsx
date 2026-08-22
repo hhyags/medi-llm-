@@ -82,7 +82,7 @@ export default function NotificationDrawer() {
                       </div>
                       <div>
                         <h4 className="text-xs font-bold text-slate-900">{n.title}</h4>
-                        <p className="text-xs text-slate-700 mt-1 leading-relaxed">{n.message}</p>
+                        <p className="text-xs text-slate-700 mt-1 leading-relaxed">{typeof n.message === 'object' ? (n.message as any)?.message || JSON.stringify(n.message) : String(n.message)}</p>
                         <span className="text-[10px] text-slate-400 font-mono mt-1.5 block">
                           {new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(n.timestamp).toLocaleDateString()}
                         </span>

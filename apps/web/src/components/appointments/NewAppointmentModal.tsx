@@ -102,7 +102,7 @@ export default function NewAppointmentModal() {
           {error && (
             <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{error}</span>
+              <span>{typeof error === 'object' ? (error as any)?.message || JSON.stringify(error) : String(error)}</span>
             </div>
           )}
 
