@@ -1,7 +1,7 @@
 // MedFlow AI CRM — Centralized Authorization & Permission Matrix
 import { UserRole } from '../../types/medflow';
 
-export type AppResource = 'dashboard' | 'patients' | 'appointments' | 'calling' | 'records' | 'settings';
+export type AppResource = 'dashboard' | 'patients' | 'appointments' | 'calling' | 'records' | 'settings' | 'chat';
 export type AppAction = 'read' | 'create' | 'update' | 'delete';
 
 export interface PermissionRule {
@@ -17,6 +17,7 @@ const PERMISSION_MATRIX: Record<UserRole, Record<AppResource, AppAction[]>> = {
     calling: ['read', 'create', 'update', 'delete'],
     records: ['read', 'create', 'update', 'delete'],
     settings: ['read', 'create', 'update', 'delete'],
+    chat: ['read', 'create', 'update', 'delete'],
   },
   doctor: {
     dashboard: ['read'],
@@ -25,6 +26,7 @@ const PERMISSION_MATRIX: Record<UserRole, Record<AppResource, AppAction[]>> = {
     calling: ['read'],
     records: ['read', 'create', 'update'],
     settings: [], // Doctors have no settings access -> 403
+    chat: ['read', 'create'],
   },
   receptionist: {
     dashboard: ['read'],
@@ -33,6 +35,7 @@ const PERMISSION_MATRIX: Record<UserRole, Record<AppResource, AppAction[]>> = {
     calling: ['read', 'create'],
     records: ['read'],
     settings: [], // Receptionists have no settings access -> 403
+    chat: ['read', 'create'],
   },
   patient: {
     dashboard: ['read'],
@@ -41,6 +44,7 @@ const PERMISSION_MATRIX: Record<UserRole, Record<AppResource, AppAction[]>> = {
     calling: [], // Cannot access AI dispatch
     records: ['read'], // Can only read own records
     settings: [], // No settings access -> 403
+    chat: ['read', 'create'],
   },
 };
 

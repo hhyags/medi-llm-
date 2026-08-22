@@ -23,7 +23,8 @@ import {
   ChevronDown,
   LogOut,
   Building2,
-  Check
+  Check,
+  MessageSquare
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -44,6 +45,7 @@ export default function Navbar() {
     { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
     { href: '/patients', label: 'Patients', icon: <Users className="w-4 h-4" /> },
     { href: '/appointments', label: role === 'patient' ? 'My Visits' : 'Appointments', icon: <Calendar className="w-4 h-4" /> },
+    { href: '/chat', label: 'Patient Assistant', icon: <MessageSquare className="w-4 h-4" /> },
     { href: '/calling', label: 'AI Calling', icon: <PhoneCall className="w-4 h-4" />, badge: 'Live Agent' },
     { href: '/records', label: role === 'patient' ? 'My Records' : 'Records Vault', icon: <FileText className="w-4 h-4" /> },
     { href: '/settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> }
