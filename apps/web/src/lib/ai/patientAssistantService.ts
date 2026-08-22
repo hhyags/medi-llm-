@@ -122,7 +122,12 @@ export class PatientAssistantService {
       q.includes('dosage') ||
       q.includes('should i take') ||
       q.includes('should i stop') ||
+      q.includes('can i stop') ||
+      q.includes('stop taking') ||
       q.includes('stop my medicine') ||
+      q.includes('stop medicine') ||
+      q.includes('increase') ||
+      q.includes('decrease') ||
       q.includes('prescribe') ||
       q.includes('treat my') ||
       q.includes('cure my')

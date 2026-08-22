@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { checkRateLimit } from '../../../lib/rateLimit';
 import { patientAssistantService } from '../../../lib/ai/patientAssistantService';
+import { geminiService } from '../../../lib/ai/geminiClient';
 import { enforceWordLimit, countWords } from '../../../lib/ai/wordLimit';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
@@ -13,7 +16,7 @@ export async function POST(request: Request) {
         {
           response: rateLimitMsg,
           wordCount: countWords(rateLimitMsg),
-          intent: 'UNKNOWN',
+          intent: 'UNSUPPORTED',
           action_taken: 'RATE_LIMITED'
         },
         {
@@ -28,22 +31,23 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const { message, hospital_id, session_id } = body;
+    const { message, hospital_id, session_id, history } = body;
 
     if (!message || typeof message !== 'string' || !message.trim()) {
       const emptyMsg = enforceWordLimit('Please provide a valid question.', 25);
       return NextResponse.json(
-        { response: emptyMsg, wordCount: countWords(emptyMsg), intent: 'UNKNOWN' },
+        { response: emptyMsg, wordCount: countWords(emptyMsg), intent: 'UNSUPPORTED' },
         { status: 400 }
       );
     }
 
     // 2. Resolve Authenticated Tenant & User Context
-    // Extract headers (e.g. from session or auth middleware)
     const reqHospitalId = request.headers.get('x-hospital-id') || hospital_id || 'hospital_001';
     const reqUserId = request.headers.get('x-user-id') || 'USR_CURRENT';
     const reqUserRole = request.headers.get('x-user-role') || 'patient';
     const reqPatientId = request.headers.get('x-patient-id') || 'PAT-001';
+
+    const hospitalName = reqHospitalId === 'hospital_002' ? 'St. Jude Medical Center' : 'City Memorial Hospital';
 
     const context = {
       uid: reqUserId,
@@ -71,61 +75,66 @@ export async function POST(request: Request) {
       }
     }
 
-    // 4. Try AI/FastAPI Backend if reachable, otherwise use server-side Patient Assistant Engine
-    const backendUrl = process.env.BACKEND_API_URL || 'http://localhost:8000';
+    // 4. Intent Classification and Deterministic Safety Checks
+    const detectedIntent = patientAssistantService.detectIntent(message);
+
+    // If deterministic safety intent (Prompt injection, Emergency, Medical Advice Refusal, Human Escalation, Actions)
     let generatedData = null;
-
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2500);
-
-      const apiRes = await fetch(`${backendUrl}/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+    if (
+      detectedIntent === 'PROMPT_INJECTION' ||
+      detectedIntent === 'EMERGENCY' ||
+      detectedIntent === 'MEDICAL_ADVICE' ||
+      detectedIntent === 'HUMAN_ESCALATION' ||
+      detectedIntent === 'APPOINTMENT_ACTION' ||
+      detectedIntent === 'PATIENT_DATA'
+    ) {
+      generatedData = patientAssistantService.generateResponse(message, context, patientAppointment);
+    } else {
+      // 5. Use Gemini AI for General Medical Q&A, Medical Education, and Hospital Info
+      try {
+        const geminiRes = await geminiService.generateChatResponse(
           message,
-          session_id: session_id || 'web_session',
-          hospital_id: reqHospitalId
-        }),
-        signal: controller.signal,
-        cache: 'no-store'
-      });
-      clearTimeout(timeoutId);
+          history || [],
+          {
+            hospitalName,
+            patientName: reqUserRole === 'patient' ? 'Patient' : undefined,
+            upcomingAppointment: patientAppointment ? `${patientAppointment.doctorName} on ${patientAppointment.date} at ${patientAppointment.time}` : undefined
+          }
+        );
 
-      if (apiRes.ok) {
-        const rawJson = await apiRes.json();
-        if (rawJson && rawJson.response) {
-          const processedResponse = enforceWordLimit(rawJson.response, 25);
+        if (geminiRes && geminiRes.response) {
+          const processedResponse = enforceWordLimit(geminiRes.response, 25);
           generatedData = {
             response: processedResponse,
-            intent: rawJson.action_taken || patientAssistantService.detectIntent(message),
+            intent: detectedIntent,
             wordCount: countWords(processedResponse),
             hospitalId: reqHospitalId,
             timestamp: new Date().toISOString()
           };
         }
+      } catch (err) {
+        console.warn('Gemini inference note:', err);
       }
-    } catch {
-      // Backend not running or timeout; seamlessly use server-side Patient Assistant Service
+
+      if (!generatedData) {
+        generatedData = patientAssistantService.generateResponse(message, context, patientAppointment);
+      }
     }
 
-    if (!generatedData) {
-      generatedData = patientAssistantService.generateResponse(message, context, patientAppointment);
-    }
-
-    // 5. Final Strict 25-Word Verification
+    // 6. Strict 25-Word Server-Side Pipeline Enforcement
     const finalCleanResponse = enforceWordLimit(generatedData.response, 25);
     const finalWordCount = countWords(finalCleanResponse);
 
     return NextResponse.json(
       {
         response: finalCleanResponse,
-        intent: generatedData.intent,
+        intent: generatedData.intent || detectedIntent,
         wordCount: finalWordCount,
         action_required: (generatedData as any).action_required,
         action_label: (generatedData as any).action_label,
         hospitalId: reqHospitalId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        model_used: process.env.GEMINI_MODEL || 'gemini-1.5-flash'
       },
       {
         headers: {
@@ -141,7 +150,7 @@ export async function POST(request: Request) {
       {
         response: fallbackMsg,
         wordCount: countWords(fallbackMsg),
-        intent: 'UNKNOWN',
+        intent: 'UNSUPPORTED',
         action_taken: 'SERVICE_ERROR'
       },
       { status: 500 }
