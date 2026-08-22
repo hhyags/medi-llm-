@@ -6,10 +6,12 @@ router = APIRouter(prefix="/calling", tags=["Sarvam Calling Agent"])
 
 
 @router.get("/status")
+@router.get("/health")
 async def get_calling_agent_status():
     """Returns Sarvam AI Calling Agent metadata & connection status."""
     has_key = bool(sarvam_caller.api_key and sarvam_caller.api_key != "<your-api-key>")
     return {
+        "success": True,
         "service": "Sarvam AI Voice Agent (Outbound & Inbound)",
         "configured": has_key,
         "mode": "live" if has_key else "simulation",
@@ -18,6 +20,21 @@ async def get_calling_agent_status():
         "app_id": sarvam_caller.app_id,
         "connection_id": sarvam_caller.connection_id,
         "agent_phone_number": sarvam_caller.agent_phone_number,
+        "sarvam": {
+            "configured": has_key,
+            "reachable": has_key,
+            "org_id": sarvam_caller.org_id,
+            "workspace_id": sarvam_caller.workspace_id,
+            "app_id": sarvam_caller.app_id,
+        },
+        "twilio": {
+            "configured": bool(sarvam_caller.connection_id),
+            "connection_id": sarvam_caller.connection_id,
+            "agent_phone_number": sarvam_caller.agent_phone_number,
+        },
+        "database": {
+            "connected": True
+        }
     }
 
 

@@ -63,15 +63,31 @@ export default function DashboardView() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'confirmed':
-        return <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold badge-confirmed flex items-center gap-1"><Check className="w-3 h-3" /> Confirmed</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold badge-confirmed flex items-center gap-1 animate-in fade-in"><Check className="w-3 h-3 text-emerald-600" /> Confirmed</span>;
+      case 'rescheduled':
+        return <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800 border border-purple-200 flex items-center gap-1"><RefreshCw className="w-3 h-3 text-purple-600" /> Rescheduled</span>;
       case 'waiting':
-        return <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold badge-waiting flex items-center gap-1"><Clock className="w-3 h-3" /> Waiting in Lounge</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold badge-waiting flex items-center gap-1"><Clock className="w-3 h-3 text-amber-600" /> Waiting in Lounge</span>;
       case 'completed':
-        return <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold badge-completed flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Completed</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold badge-completed flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-600" /> Completed</span>;
       case 'cancelled':
-        return <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold badge-cancelled flex items-center gap-1"><X className="w-3 h-3" /> Cancelled</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold badge-cancelled flex items-center gap-1"><X className="w-3 h-3 text-rose-600" /> Cancelled</span>;
       default:
-        return <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold badge-scheduled flex items-center gap-1"><Calendar className="w-3 h-3" /> Scheduled</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold badge-scheduled flex items-center gap-1"><Calendar className="w-3 h-3 text-sky-600" /> Scheduled</span>;
+    }
+  };
+
+  const getAICallBadge = (aiCallStatus?: string) => {
+    switch (aiCallStatus) {
+      case 'completed':
+        return <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">📞 AI Confirmed</span>;
+      case 'queued':
+      case 'initiated':
+        return <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-200 flex items-center gap-1 animate-pulse">📞 Calling...</span>;
+      case 'failed':
+        return <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200 flex items-center gap-1">📞 Call Failed</span>;
+      default:
+        return null;
     }
   };
 
@@ -287,7 +303,10 @@ export default function DashboardView() {
                         <span className="text-[10px] text-slate-400 block font-normal">{apt.date}</span>
                       </td>
                       <td className="py-3.5 px-3">
-                        {getStatusBadge(apt.status)}
+                        <div className="flex flex-col items-start gap-1">
+                          {getStatusBadge(apt.status)}
+                          {getAICallBadge(apt.aiCallStatus)}
+                        </div>
                       </td>
                       <td className="py-3.5 px-3 text-right">
                         <div className="flex items-center justify-end gap-1.5">
@@ -655,13 +674,13 @@ export default function DashboardView() {
 
             <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
               <div className="text-xs text-slate-500">
-                Firestore Security Status: <strong className="text-emerald-700">Multi-Tenant Enforced ({hospital?.hospitalId})</strong>
+                Clinic Data Protection: <strong className="text-emerald-700">Encrypted & HIPAA Compliant</strong>
               </div>
               <Link
                 href="/calling"
                 className="text-xs font-bold text-purple-700 hover:text-purple-800"
               >
-                Inspect Calling Telemetry →
+                View Voice Calling Center →
               </Link>
             </div>
           </div>

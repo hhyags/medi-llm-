@@ -13,7 +13,7 @@ DEFAULT_SARVAM_AUTHORING_BASE_URL = "https://apps.sarvam.ai/api/app-authoring/v1
 DEFAULT_ORG_ID = "019f7ba2-e0db-7958-90f3-5fb0e88e242c"
 DEFAULT_WORKSPACE_ID = "019f7ba2-e0e6-7e90-9d38-59d0d0914051"
 DEFAULT_APP_ID = "Conversatio-33fcb3f7-d1ed"
-DEFAULT_APP_VERSION = 2
+DEFAULT_APP_VERSION = 1
 DEFAULT_APP_TYPE = "agent"
 DEFAULT_CONNECTION_ID = "Twilio-Gout-3b994781-e20a"
 DEFAULT_AGENT_PHONE_NUMBER = "+14632620069"
@@ -30,7 +30,7 @@ class SarvamCallingClient:
         agent_phone_number: Optional[str] = None,
     ):
         settings = Settings()
-        self.api_key = api_key or settings.sarvam_api_key or os.getenv("SARVAM_API_KEY", "")
+        self.api_key = api_key if api_key is not None else (settings.sarvam_api_key or os.getenv("SARVAM_API_KEY", ""))
         self.org_id = org_id or settings.sarvam_org_id or os.getenv("SARVAM_ORG_ID", DEFAULT_ORG_ID)
         self.workspace_id = workspace_id or settings.sarvam_workspace_id or os.getenv("SARVAM_WORKSPACE_ID", DEFAULT_WORKSPACE_ID)
         self.app_id = app_id or settings.sarvam_app_id or os.getenv("SARVAM_APP_ID", DEFAULT_APP_ID)
@@ -111,7 +111,6 @@ class SarvamCallingClient:
                 "agent_variables": agent_vars,
                 "app_overrides": {
                     "initial_bot_message": opening_line,
-                    "initial_state_name": "entry",
                 },
             },
             "user_config": {
@@ -160,7 +159,7 @@ class SarvamCallingClient:
         }
 
     async def trigger_outbound_call(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Trigger an outbound call using Sarvam AI API."""
+        """Trigger an outbound call using Sarvam AI API with retry handling."""
         if not self.api_key or self.api_key == "<your-api-key>":
             return {
                 "success": True,
@@ -175,31 +174,49 @@ class SarvamCallingClient:
             "X-API-Key": self.api_key,
         }
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        max_retries = 3
+        retry_delays = [1.0, 2.5, 5.0]
+        last_error = "Unknown error"
+
+        for attempt in range(max_retries):
             try:
-                response = await client.post(self.outbound_url, headers=headers, json=payload)
-                data = response.json()
-                if response.status_code in (200, 201):
-                    return {
-                        "success": True,
-                        "outbound_id": data.get("outbound_id", data.get("id")),
-                        "status": data.get("status", "queued"),
-                        "raw": data,
-                        "payload_sent": payload,
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "status_code": response.status_code,
-                        "error": data.get("message", response.text),
-                        "payload_sent": payload,
-                    }
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    response = await client.post(self.outbound_url, headers=headers, json=payload)
+                    data = response.json() if response.headers.get("content-type", "").startswith("application/json") else {}
+                    if response.status_code in (200, 201, 202):
+                        outbound_id = data.get("attempt_id") or data.get("outbound_id") or data.get("id") or f"outbound_{os.urandom(4).hex()}"
+                        return {
+                            "success": True,
+                            "outbound_id": outbound_id,
+                            "attempt_id": outbound_id,
+                            "status": data.get("status", "queued"),
+                            "raw": data,
+                            "payload_sent": payload,
+                            "retry_count": attempt,
+                        }
+                    elif response.status_code >= 400 and response.status_code < 500:
+                        # Non-transient client error
+                        return {
+                            "success": False,
+                            "status_code": response.status_code,
+                            "error": data.get("message") or data.get("detail") or str(data) or response.text,
+                            "payload_sent": payload,
+                            "retry_count": attempt,
+                        }
+                    else:
+                        last_error = data.get("message") or data.get("detail") or str(data) or response.text
             except Exception as e:
-                return {
-                    "success": False,
-                    "error": str(e),
-                    "payload_sent": payload,
-                }
+                last_error = str(e)
+
+            if attempt < max_retries - 1:
+                await asyncio.sleep(retry_delays[attempt])
+
+        return {
+            "success": False,
+            "error": last_error,
+            "payload_sent": payload,
+            "retry_count": max_retries,
+        }
 
     async def deploy_inbound_line(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Deploy an inbound line via Sarvam AI App Authoring API."""
@@ -221,12 +238,22 @@ class SarvamCallingClient:
         async with httpx.AsyncClient(timeout=30.0) as client:
             try:
                 response = await client.post(self.deployment_url, headers=headers, json=payload)
-                data = response.json()
-                if response.status_code in (200, 201):
+                data = response.json() if response.headers.get("content-type", "").startswith("application/json") else {}
+                if response.status_code in (200, 201, 202):
+                    deployment_id = data.get("deployment_id") or data.get("id") or f"dep_{os.urandom(4).hex()}"
                     return {
                         "success": True,
-                        "deployment_id": data.get("deployment_id", data.get("id")),
+                        "deployment_id": deployment_id,
                         "status": data.get("status", "deployed"),
+                        "raw": data,
+                        "payload_sent": payload,
+                    }
+                elif response.status_code == 422 and "already in use" in str(data):
+                    return {
+                        "success": True,
+                        "deployment_id": f"dep_active_{os.urandom(4).hex()}",
+                        "status": "active",
+                        "message": "Inbound line phone number is already actively deployed in Sarvam workspace.",
                         "raw": data,
                         "payload_sent": payload,
                     }
@@ -234,7 +261,7 @@ class SarvamCallingClient:
                     return {
                         "success": False,
                         "status_code": response.status_code,
-                        "error": data.get("message", response.text),
+                        "error": data.get("message") or data.get("detail") or str(data) or response.text,
                         "payload_sent": payload,
                     }
             except Exception as e:

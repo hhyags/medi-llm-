@@ -65,13 +65,13 @@ export default function NewAppointmentModal() {
       return;
     }
 
-    setSuccessMsg('Appointment Created ✓ — AI confirmation call queued...');
+    setSuccessMsg(`✓ Appointment Booked! AI confirmation call automatically dispatched to ${selectedPatient.phone}`);
     setTimeout(() => {
       setIsNewAppointmentOpen(false);
       setSuccessMsg('');
       setReason('');
       setNotes('');
-    }, 1800);
+    }, 2200);
   };
 
   return (

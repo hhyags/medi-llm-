@@ -91,6 +91,7 @@ dist/
 # Next.js build output
 .next
 out
+*.tsbuildinfo
 
 # Nuxt.js build / generate output
 .nuxt

@@ -1,77 +1,10 @@
-import { Appointment, Patient, Doctor, HospitalSettings, AICallingSettings, CallRecord, CallDialogueTurn, CallOutcome, CallStatus, UserProfile } from '../../types/medflow';
+import { Appointment, Patient, Doctor, HospitalSettings, AICallingSettings, CallRecord, CallDialogueTurn, CallOutcome, CallStatus } from '../../types/medflow';
+import { normalizePhoneToE164, maskPhoneNumber } from './phoneUtils';
 
-// ─── Phone Number Sanitization & E.164 Validation ─────────────────────────────
+export { normalizePhoneToE164, maskPhoneNumber };
+export const validateAndFormatE164 = normalizePhoneToE164;
 
-/**
- * Validates and converts standard Indian and international phone numbers into E.164 format.
- * Converts 10-digit Indian numbers (e.g. 9876543210) into +919876543210.
- * Strips formatting artifacts, validates digit lengths, and rejects invalid inputs.
- */
-export function validateAndFormatE164(phone?: string | null): { isValid: boolean; formatted: string; error?: string } {
-  if (!phone || typeof phone !== 'string') {
-    return { isValid: false, formatted: '', error: 'Phone number is missing.' };
-  }
-
-  const trimmed = phone.trim();
-  if (!trimmed) {
-    return { isValid: false, formatted: '', error: 'Phone number is empty.' };
-  }
-
-  // Strip non-digit and non-plus characters
-  const clean = trimmed.replace(/[^\d+]/g, '');
-  const digitsOnly = clean.replace(/\+/g, '');
-
-  if (!digitsOnly || digitsOnly.length < 10) {
-    return { isValid: false, formatted: '', error: `Invalid phone length (${digitsOnly.length} digits). Minimum 10 digits required.` };
-  }
-
-  // Reject all zeros or obvious non-numbers
-  if (/^0+$/.test(digitsOnly)) {
-    return { isValid: false, formatted: '', error: 'Phone number cannot be all zeros.' };
-  }
-
-  let formatted = '';
-
-  // 10 digits -> Assume Indian mobile (+91)
-  if (digitsOnly.length === 10) {
-    formatted = `+91${digitsOnly}`;
-  }
-  // 12 digits starting with 91 -> Indian (+91XXXXXXXXXX)
-  else if (digitsOnly.length === 12 && digitsOnly.startsWith('91')) {
-    formatted = `+${digitsOnly}`;
-  }
-  // 11 digits starting with 1 -> US/Canada (+1XXXXXXXXXX)
-  else if (digitsOnly.length === 11 && digitsOnly.startsWith('1')) {
-    formatted = `+${digitsOnly}`;
-  }
-  // Standard E.164 international numbers with leading +
-  else if (clean.startsWith('+') && digitsOnly.length >= 10 && digitsOnly.length <= 15) {
-    formatted = `+${digitsOnly}`;
-  }
-  // Plain digits between 10 and 15
-  else if (digitsOnly.length >= 10 && digitsOnly.length <= 15) {
-    formatted = `+${digitsOnly}`;
-  }
-  return { isValid: true, formatted };
-}
-
-export function formatApiErrorMessage(data: any, fallback: string): string {
-  if (!data) return fallback;
-  if (typeof data === 'string') return data;
-  if (typeof data.error === 'string') return data.error;
-  if (typeof data.error?.message === 'string') return data.error.message;
-  if (typeof data.message === 'string') return data.message;
-  if (typeof data.msg === 'string') return data.msg;
-  if (typeof data.detail === 'string') return data.detail;
-  if (typeof data.error === 'object' && data.error?.detail) return String(data.error.detail);
-  try {
-    return JSON.stringify(data.error || data.message || data);
-  } catch {
-    return fallback;
-  }
-}
-
-// ─── Outbound Interfaces ──────────────────────────────────────────────────────
+// ─── Outbound & Calling Interfaces ────────────────────────────────────────────
 
 export interface SarvamAgentVariables {
   appointmentDurationMinutes?: string;
@@ -105,7 +38,6 @@ export interface SarvamAgentVariables {
 
 export interface SarvamAppOverrides {
   initial_bot_message?: string;
-  initial_state_name?: string;
 }
 
 export interface SarvamConnectionConfig {
@@ -137,15 +69,25 @@ export interface SarvamOutboundPayload {
   webhook_config?: SarvamWebhookConfig;
 }
 
+export interface CallingErrorDetails {
+  code: string;
+  message: string;
+  details?: string;
+  provider?: 'sarvam' | 'twilio' | 'network' | 'validation';
+  isTrialRestriction?: boolean;
+}
+
 export interface SarvamOutboundResponse {
   success: boolean;
+  status: string;
   outbound_id?: string;
+  attempt_id?: string;
   call_id?: string;
-  status?: string;
   message?: string;
-  error?: string;
+  error?: CallingErrorDetails;
   payload_sent?: SarvamOutboundPayload;
   raw_response?: any;
+  retryCount?: number;
 }
 
 export interface SarvamWebhookPayload {
@@ -171,27 +113,21 @@ export interface SarvamWebhookPayload {
   agent_variables?: Record<string, string>;
 }
 
-// ─── Inbound Deployment Interfaces ────────────────────────────────────────────
-
-export interface SarvamInboundConnectionConfig {
-  connection_id: string;
-  phone_numbers: string[];
-}
-
-export interface SarvamInboundTimingConfig {
-  start_time: string;
-  end_time: string;
-  allowed_days: string[];
-  timezone: string;
-}
-
 export interface SarvamInboundDeploymentPayload {
   name: string;
   description: string;
   app_id: string;
   app_version: number;
-  connection_configs: SarvamInboundConnectionConfig[];
-  inbound_config: SarvamInboundTimingConfig;
+  connection_configs: Array<{
+    connection_id: string;
+    phone_numbers: string[];
+  }>;
+  inbound_config: {
+    start_time: string;
+    end_time: string;
+    allowed_days: string[];
+    timezone: string;
+  };
 }
 
 export interface SarvamInboundDeploymentResponse {
@@ -212,12 +148,11 @@ export const SARVAM_DEFAULTS = {
   ORG_ID: '019f7ba2-e0db-7958-90f3-5fb0e88e242c',
   WORKSPACE_ID: '019f7ba2-e0e6-7e90-9d38-59d0d0914051',
   APP_ID: 'Conversatio-33fcb3f7-d1ed',
-  APP_VERSION: 2,
+  APP_VERSION: 1,
   APP_TYPE: 'agent',
   CONNECTION_ID: 'Twilio-Gout-3b994781-e20a',
   AGENT_PHONE_NUMBER: '+14632620069',
-  INITIAL_STATE: 'entry',
-  DEFAULT_WEBHOOK_PATH: '/api/calling/webhook',
+  DEFAULT_WEBHOOK_PATH: '/api/calling/webhook/sarvam',
   INBOUND_TIMEZONE: 'Asia/Kolkata',
   INBOUND_START_TIME: '08:00',
   INBOUND_END_TIME: '20:00',
@@ -227,11 +162,78 @@ export const SARVAM_DEFAULTS = {
     'Wednesday',
     'Thursday',
     'Friday',
-    'Saturday'
+    'Saturday',
+    'Sunday'
   ]
 };
 
-// ─── Service Class ────────────────────────────────────────────────────────────
+// ─── Error Classifier Helper ──────────────────────────────────────────────────
+
+export function parseProviderError(status: number, responseData: any, rawText: string): CallingErrorDetails {
+  const dataStr = typeof responseData === 'object' ? JSON.stringify(responseData) : String(responseData || rawText);
+  const lowerStr = dataStr.toLowerCase();
+
+  // Twilio Trial unverified caller ID
+  if (lowerStr.includes('unverified') || lowerStr.includes('21219') || lowerStr.includes('verify')) {
+    return {
+      code: 'TWILIO_TRIAL_RESTRICTION',
+      provider: 'twilio',
+      isTrialRestriction: true,
+      message: 'This destination phone number is unverified in your Twilio trial account.',
+      details: 'Twilio trial accounts can only call verified numbers. Please add this number under Twilio Console -> Phone Numbers -> Verified Caller IDs.'
+    };
+  }
+
+  // Twilio Geo Permissions
+  if (lowerStr.includes('geo') || lowerStr.includes('21408') || lowerStr.includes('permission')) {
+    return {
+      code: 'TWILIO_GEO_PERMISSION_BLOCKED',
+      provider: 'twilio',
+      message: 'Twilio geographic permissions for India (+91) are disabled.',
+      details: 'Please enable Voice -> Geo Permissions for India (+91) in your Twilio console.'
+    };
+  }
+
+  // Sarvam 401/403 Authentication
+  if (status === 401 || status === 403 || lowerStr.includes('unauthorized') || lowerStr.includes('invalid api key')) {
+    return {
+      code: 'SARVAM_AUTH_FAILED',
+      provider: 'sarvam',
+      message: 'Sarvam AI authentication failed.',
+      details: 'Check your SARVAM_API_KEY environment variable.'
+    };
+  }
+
+  // Sarvam 404 Agent phone number or App not found in org / workspace
+  if (status === 404 || dataStr.includes('not found') || dataStr.includes('Agent phone number')) {
+    return {
+      code: 'SARVAM_AGENT_PHONE_NOT_FOUND',
+      provider: 'sarvam',
+      message: 'Your Sarvam Voice Agent phone number is not configured or is not available in the current workspace.',
+      details: responseData?.error?.data?.details || 'Check Sarvam → Voice Agents → Deploy → Phone Numbers to confirm the phone number exists and is active under Twilio-Gout.'
+    };
+  }
+
+  // Sarvam 422 Invalid Parameter
+  if (status === 422) {
+    const detailMsg = responseData?.error?.data?.details || responseData?.error?.message || responseData?.message || rawText;
+    return {
+      code: 'SARVAM_INVALID_PARAMETER',
+      provider: 'sarvam',
+      message: 'Sarvam AI rejected the call request configuration.',
+      details: detailMsg
+    };
+  }
+
+  return {
+    code: 'SARVAM_CALL_FAILED',
+    provider: 'sarvam',
+    message: responseData?.error?.message || responseData?.message || `Provider returned status ${status}`,
+    details: dataStr
+  };
+}
+
+// ─── Sarvam Calling Service Class ─────────────────────────────────────────────
 
 class SarvamCallingService {
   private getOrgId(): string {
@@ -246,13 +248,13 @@ class SarvamCallingService {
     return process.env.SARVAM_API_KEY || '';
   }
 
-  private getOutboundEndpointUrl(): string {
+  public getOutboundEndpointUrl(): string {
     const orgId = this.getOrgId();
     const workspaceId = this.getWorkspaceId();
     return `${SARVAM_DEFAULTS.OUTBOUND_BASE_URL}/orgs/${orgId}/workspaces/${workspaceId}/outbounds`;
   }
 
-  private getDeploymentsEndpointUrl(): string {
+  public getDeploymentsEndpointUrl(): string {
     const orgId = this.getOrgId();
     const workspaceId = this.getWorkspaceId();
     return `${SARVAM_DEFAULTS.AUTHORING_BASE_URL}/orgs/${orgId}/workspaces/${workspaceId}/deployments`;
@@ -287,25 +289,24 @@ class SarvamCallingService {
     } = params;
 
     const patientName = patient?.name || appointment?.patientName || 'Patient';
-    const doctorName = doctor?.name || appointment?.doctorName || 'Doctor';
-    const hospitalName = hospitalSettings?.name || 'MedFlow Hospital';
-    const hospitalAddress = hospitalSettings?.address || '100 Medical Center Way, Suite 400';
-    const hospitalPhone = hospitalSettings?.phone || '+1 (555) 019-2834';
+    const doctorName = doctor?.name || appointment?.doctorName || 'Dr. Priya Sharma';
+    const hospitalName = hospitalSettings?.name || 'MedVoice City Hospital';
+    const hospitalAddress = hospitalSettings?.address || '123 Healthcare Boulevard, Medical District';
+    const hospitalPhone = hospitalSettings?.phone || '+1 (800) 555-MEDS';
     const workingHours = hospitalSettings?.workingHours || 'Mon - Fri: 8:00 AM - 8:00 PM';
-    const appointmentDate = appointment?.date || new Date().toISOString().split('T')[0];
-    const appointmentTime = appointment?.time || '10:00 AM';
+    const appointmentDate = appointment?.date || 'Tomorrow';
+    const appointmentTime = appointment?.time || '10:30 AM';
     const agentName = aiSettings?.agentName || 'Maya';
-    const callerId = aiSettings?.callingNumber || SARVAM_DEFAULTS.AGENT_PHONE_NUMBER;
-    const department = appointment?.department || doctor?.department || doctor?.specialization || 'General Medicine';
+    const agentPhoneNumber = process.env.SARVAM_AGENT_PHONE_NUMBER || SARVAM_DEFAULTS.AGENT_PHONE_NUMBER;
+    const department = appointment?.department || doctor?.department || doctor?.specialization || 'Dermatology';
 
-    // Format phone to standard international format if not already prefixed
-    let cleanPhone = targetPhone.trim().replace(/[^\d+]/g, '');
-    if (!cleanPhone.startsWith('+')) {
-      cleanPhone = `+${cleanPhone}`;
-    }
+    // Normalize phone number to strict E.164
+    const phoneNorm = normalizePhoneToE164(targetPhone);
+    const cleanPhone = phoneNorm.isValid ? phoneNorm.formatted : targetPhone.trim();
 
-    // Compose human-friendly initial opening line for the voice bot
-    const openingLine = customInitialMessage || 
+    // Dynamic initial greeting line for the voice bot
+    const openingLine =
+      customInitialMessage ||
       `Hello ${patientName.split(' ')[0]}, I'm ${agentName} calling from ${hospitalName} regarding your appointment with ${doctorName} scheduled for ${appointmentDate} at ${appointmentTime}. Would you like to confirm your appointment?`;
 
     // Map all 26 Sarvam agent variables
@@ -328,18 +329,17 @@ class SarvamCallingService {
       indicativeConsultationFee: '$150.00',
       noShowCharge: '$0.00 (Please notify 24h prior)',
       paymentModes: 'Credit Card, Debit Card, Insurance, UPI / Online',
-      preparationInstructions: 'Please arrive 10 minutes early at reception with your photo ID and previous prescription history.',
+      preparationInstructions: 'Please arrive 10 minutes early at reception with your photo ID.',
       bookingReminderChannel: 'SMS & Voice',
-      preferredCallbackWindow: 'Within 2 hours during regular clinic hours',
+      preferredCallbackWindow: 'Within 2 hours during clinic hours',
       cancellation_reason: '',
-      confirmed_slot: `${appointmentDate} ${appointmentTime}`,
+      confirmed_slot: `${appointmentDate} at ${appointmentTime}`,
       escalation_reason: '',
       callback_requested_time: '',
       reminder_channel_selected: 'Voice Call',
       ...customVariables
     };
 
-    // Formulate Webhook URL
     const baseUrl = appBaseUrl || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const webhookUrl = `${baseUrl.replace(/\/$/, '')}${SARVAM_DEFAULTS.DEFAULT_WEBHOOK_PATH}`;
 
@@ -350,14 +350,12 @@ class SarvamCallingService {
         app_type: SARVAM_DEFAULTS.APP_TYPE,
         connection_config: {
           connection_id: process.env.SARVAM_CONNECTION_ID || SARVAM_DEFAULTS.CONNECTION_ID,
-          agent_phone_number: callerId
+          agent_phone_number: agentPhoneNumber
         },
         agent_variables: agentVariables,
-        ...(customInitialMessage ? {
-          app_overrides: {
-            initial_bot_message: customInitialMessage
-          }
-        } : {})
+        app_overrides: {
+          initial_bot_message: openingLine
+        }
       },
       user_config: {
         user_phone_number: cleanPhone
@@ -376,77 +374,177 @@ class SarvamCallingService {
   }
 
   /**
-   * Dispatches the Outbound Call directly to Sarvam AI API
+   * Dispatches the Outbound Call to Sarvam AI with controlled exponential-backoff retry for transient errors.
    */
   public async initiateOutboundCall(payload: SarvamOutboundPayload): Promise<SarvamOutboundResponse> {
-    const apiKey = this.getApiKey();
-    const endpoint = this.getOutboundEndpointUrl();
+    const targetPhoneMasked = maskPhoneNumber(payload.user_config?.user_phone_number);
+    console.log(`[CALLING] Initiating outbound call to ${targetPhoneMasked}`);
 
-    // If no API key is provided, gracefully provide simulated success and diagnostic payload
-    if (!apiKey || apiKey === '<your-api-key>') {
-      const mockOutboundId = `sarvam_outbound_${Date.now()}`;
-      return {
-        success: true,
-        outbound_id: mockOutboundId,
-        call_id: `CALL-${Math.floor(10000 + Math.random() * 90000)}`,
-        status: 'queued_simulation',
-        message: 'Sarvam AI Call dispatched in simulation mode (SARVAM_API_KEY not configured in environment). Live payload built successfully.',
-        payload_sent: payload
-      };
-    }
-
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': apiKey
-        },
-        body: JSON.stringify(payload)
-      });
-
-      const responseData = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
-          const mockOutboundId = `sarvam_outbound_${Date.now()}`;
+    // If invoked on the browser client, route securely through Next.js server API endpoint
+    if (typeof window !== 'undefined') {
+      try {
+        const clientRes = await fetch('/api/calling/outbound', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            targetPhone: payload.user_config?.user_phone_number,
+            customVariables: payload.app_config?.agent_variables,
+            customInitialMessage: payload.app_config?.app_overrides?.initial_bot_message
+          })
+        });
+        const clientData = await clientRes.json().catch(() => ({}));
+        if (clientRes.ok && clientData.success) {
           return {
             success: true,
-            outbound_id: mockOutboundId,
-            call_id: `CALL-${Math.floor(10000 + Math.random() * 90000)}`,
             status: 'queued',
-            message: `Sarvam AI API call handled (${responseData.error?.message || responseData.message || 'HTTP ' + response.status}).`,
-            payload_sent: payload,
-            raw_response: responseData
+            attempt_id: clientData.attemptId || clientData.outbound_id,
+            outbound_id: clientData.outbound_id || clientData.attemptId,
+            call_id: clientData.call_id,
+            message: clientData.message || 'AI call queued successfully.',
+            payload_sent: payload
           };
         }
         return {
           success: false,
-          error: formatApiErrorMessage(responseData, `Sarvam API error: HTTP ${response.status}`),
           status: 'failed',
-          payload_sent: payload,
-          raw_response: responseData
+          error: clientData.error || {
+            code: 'SARVAM_CALL_FAILED',
+            message: clientData.message || 'Unable to start outbound call via server API.'
+          },
+          payload_sent: payload
+        };
+      } catch (err: any) {
+        return {
+          success: false,
+          status: 'failed',
+          error: {
+            code: 'NETWORK_ERROR',
+            message: 'Network error contacting /api/calling/outbound.',
+            details: err?.message || String(err)
+          },
+          payload_sent: payload
         };
       }
+    }
 
-      return {
-        success: true,
-        outbound_id: responseData.attempt_id || responseData.outbound_id || responseData.id || `outbound_${Date.now()}`,
-        call_id: responseData.call_id || `CALL-${Date.now().toString().slice(-5)}`,
-        status: responseData.status || 'queued',
-        message: 'Sarvam AI outbound call initiated successfully.',
-        payload_sent: payload,
-        raw_response: responseData
-      };
-    } catch (err: any) {
-      console.error('[SarvamCallingService] Network error initiating outbound call:', err);
+    const apiKey = this.getApiKey();
+    const endpoint = this.getOutboundEndpointUrl();
+
+    if (!apiKey || apiKey === '<your-api-key>') {
+      console.warn(`[CALLING] SARVAM_API_KEY is not set in environment.`);
       return {
         success: false,
-        error: err.message || 'Failed to connect to Sarvam AI Outbounds endpoint.',
-        status: 'network_error',
+        status: 'unconfigured',
+        error: {
+          code: 'SARVAM_UNCONFIGURED',
+          provider: 'sarvam',
+          message: 'Sarvam API Key is not configured in server environment variables.',
+          details: 'Please set SARVAM_API_KEY in your .env or .env.local file.'
+        },
         payload_sent: payload
       };
     }
+
+    const MAX_RETRIES = 3;
+    const RETRY_DELAYS_MS = [1000, 3000, 7000];
+
+    let attempt = 0;
+    let lastError: CallingErrorDetails = {
+      code: 'UNKNOWN_ERROR',
+      provider: 'sarvam',
+      message: 'Unknown error occurred initiating call.'
+    };
+
+    while (attempt < MAX_RETRIES) {
+      attempt++;
+      try {
+        console.log(`[CALLING] Sarvam API request attempt ${attempt}/${MAX_RETRIES} to ${endpoint}`);
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': apiKey
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        const rawText = await response.text();
+        let responseData: any = {};
+        try {
+          responseData = JSON.parse(rawText);
+        } catch {
+          responseData = { raw: rawText };
+        }
+
+        if (response.ok) {
+          const attemptId = responseData.attempt_id || responseData.outbound_id || responseData.id || `outbound_${Date.now()}`;
+          console.log(`[CALLING] Sarvam attempt created successfully: ${attemptId}`);
+          return {
+            success: true,
+            status: 'queued',
+            attempt_id: attemptId,
+            outbound_id: attemptId,
+            call_id: responseData.call_id || `CALL-${Date.now().toString().slice(-5)}`,
+            message: 'AI call queued successfully.',
+            payload_sent: payload,
+            raw_response: responseData,
+            retryCount: attempt - 1
+          };
+        }
+
+        // Parse structured error
+        lastError = parseProviderError(response.status, responseData, rawText);
+        console.error(`[CALLING] Sarvam call failed (HTTP ${response.status}):`, lastError);
+
+        // Do NOT retry 4xx errors (e.g. invalid parameter, unauthorized, trial restriction)
+        if (response.status >= 400 && response.status < 500) {
+          return {
+            success: false,
+            status: 'failed',
+            error: lastError,
+            payload_sent: payload,
+            raw_response: responseData,
+            retryCount: attempt - 1
+          };
+        }
+
+        // For 5xx server errors, sleep and retry
+        if (attempt < MAX_RETRIES) {
+          const delay = RETRY_DELAYS_MS[attempt - 1] || 3000;
+          console.log(`[CALLING] Transient 5xx error. Retrying in ${delay}ms...`);
+          await new Promise((res) => setTimeout(res, delay));
+        }
+      } catch (err: any) {
+        console.error(`[CALLING] Network exception on attempt ${attempt}:`, err?.message || err);
+        const isAbort = err?.name === 'AbortError';
+        lastError = {
+          code: isAbort ? 'TIMEOUT' : 'NETWORK_ERROR',
+          provider: 'network',
+          message: isAbort ? 'Connection to Sarvam AI timed out.' : 'Unable to connect to Sarvam AI calling service.',
+          details: err?.message || String(err)
+        };
+
+        if (attempt < MAX_RETRIES) {
+          const delay = RETRY_DELAYS_MS[attempt - 1] || 3000;
+          await new Promise((res) => setTimeout(res, delay));
+        }
+      }
+    }
+
+    return {
+      success: false,
+      status: 'failed',
+      error: lastError,
+      payload_sent: payload,
+      retryCount: attempt - 1
+    };
   }
 
   /**
@@ -502,11 +600,9 @@ class SarvamCallingService {
 
     if (!apiKey || apiKey === '<your-api-key>') {
       return {
-        success: true,
-        deployment_id: `dep_sim_${Date.now()}`,
-        status: 'active_simulation',
-        message: 'Sarvam Inbound Line deployed in simulation mode (SARVAM_API_KEY not set). Live payload verified.',
-        payload_sent: payload
+        success: false,
+        error: 'Sarvam API Key is not set in environment.',
+        status: 'unconfigured'
       };
     }
 
@@ -522,46 +618,36 @@ class SarvamCallingService {
 
       const responseData = await response.json().catch(() => ({}));
 
-      if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
-          return {
-            success: true,
-            deployment_id: `dep_sim_${Date.now()}`,
-            status: 'deployed',
-            message: 'Sarvam Inbound Line deployment verified (fallback handled).',
-            payload_sent: payload,
-            raw_response: responseData
-          };
-        }
-        if (response.status === 422 && JSON.stringify(responseData).includes('already in use')) {
-          return {
-            success: true,
-            deployment_id: `dep_active_${Date.now()}`,
-            status: 'active',
-            message: 'Inbound Line phone number is already actively deployed in Sarvam workspace.',
-            payload_sent: payload,
-            raw_response: responseData
-          };
-        }
+      if (response.ok) {
         return {
-          success: false,
-          error: formatApiErrorMessage(responseData, `Sarvam Inbound Deployment API error: HTTP ${response.status}`),
-          status: 'failed',
+          success: true,
+          deployment_id: responseData.deployment_id || responseData.id || `dep_${Date.now()}`,
+          status: responseData.status || 'deployed',
+          message: 'Sarvam AI Inbound Line deployed successfully.',
+          payload_sent: payload,
+          raw_response: responseData
+        };
+      }
+
+      if (response.status === 422 && JSON.stringify(responseData).includes('already in use')) {
+        return {
+          success: true,
+          deployment_id: `dep_active_${Date.now()}`,
+          status: 'active',
+          message: 'Inbound Line phone number is already actively deployed in Sarvam workspace.',
           payload_sent: payload,
           raw_response: responseData
         };
       }
 
       return {
-        success: true,
-        deployment_id: responseData.deployment_id || responseData.id || `dep_${Date.now()}`,
-        status: responseData.status || 'deployed',
-        message: 'Sarvam AI Inbound Line deployed successfully.',
+        success: false,
+        status: 'failed',
+        error: responseData?.error?.message || responseData?.message || `HTTP ${response.status}`,
         payload_sent: payload,
         raw_response: responseData
       };
     } catch (err: any) {
-      console.error('[SarvamCallingService] Network error deploying inbound line:', err);
       return {
         success: false,
         error: err.message || 'Failed to connect to Sarvam AI App Authoring endpoint.',
@@ -572,7 +658,59 @@ class SarvamCallingService {
   }
 
   /**
-   * Converts a Sarvam Webhook payload into MedFlow CallRecord & Outcome
+   * Diagnostic Health Check for Calling Services
+   */
+  public async checkHealth(): Promise<{
+    success: boolean;
+    sarvam: { configured: boolean; reachable: boolean; details?: string };
+    twilio: { configured: boolean; connectionId: string; callerId: string };
+    database: { connected: boolean };
+  }> {
+    const apiKey = this.getApiKey();
+    const orgId = this.getOrgId();
+    const wsId = this.getWorkspaceId();
+
+    const isSarvamConfigured = Boolean(apiKey && apiKey !== '<your-api-key>');
+    const isTwilioConfigured = Boolean(process.env.SARVAM_CONNECTION_ID || SARVAM_DEFAULTS.CONNECTION_ID);
+
+    let sarvamReachable = false;
+    let sarvamDetails = 'Unconfigured';
+
+    if (isSarvamConfigured) {
+      try {
+        const testUrl = `${SARVAM_DEFAULTS.AUTHORING_BASE_URL}/orgs/${orgId}/workspaces/${wsId}/deployments`;
+        const res = await fetch(testUrl, {
+          method: 'GET',
+          headers: { 'X-API-Key': apiKey }
+        });
+        sarvamReachable = res.ok;
+        sarvamDetails = res.ok ? 'Online & Authenticated' : `HTTP ${res.status}`;
+      } catch (e: any) {
+        sarvamReachable = false;
+        sarvamDetails = e.message || 'Network unreachable';
+      }
+    }
+
+    return {
+      success: isSarvamConfigured && sarvamReachable,
+      sarvam: {
+        configured: isSarvamConfigured,
+        reachable: sarvamReachable,
+        details: sarvamDetails
+      },
+      twilio: {
+        configured: isTwilioConfigured,
+        connectionId: process.env.SARVAM_CONNECTION_ID || SARVAM_DEFAULTS.CONNECTION_ID,
+        callerId: process.env.SARVAM_AGENT_PHONE_NUMBER || SARVAM_DEFAULTS.AGENT_PHONE_NUMBER
+      },
+      database: {
+        connected: true
+      }
+    };
+  }
+
+  /**
+   * Transforms a webhook payload into MedFlow CRM entities
    */
   public transformWebhookToCallRecord(
     webhook: SarvamWebhookPayload,
@@ -583,8 +721,6 @@ class SarvamCallingService {
     summary?: string;
     callRecord: Omit<CallRecord, 'id' | 'callId' | 'hospitalId' | 'createdAt'>;
     suggestedAppointmentStatus?: Appointment['status'];
-    rescheduleDate?: string;
-    rescheduleTime?: string;
   } {
     const disposition = (webhook.call_disposition || '').toLowerCase();
     let outcome: CallOutcome = 'confirmed';
@@ -605,7 +741,7 @@ class SarvamCallingService {
     }
 
     const transcriptTurns: CallDialogueTurn[] = (webhook.transcript || []).map((t) => ({
-      speaker: (t.speaker === 'user' || t.speaker === 'patient') ? 'patient' : 'ai',
+      speaker: t.speaker === 'user' || t.speaker === 'patient' ? 'patient' : 'ai',
       text: t.text,
       timestamp: t.timestamp || new Date().toLocaleTimeString()
     }));

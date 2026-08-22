@@ -144,6 +144,7 @@ class MedFlowStorageService {
     try {
       localStorage.setItem(key, JSON.stringify(value));
       this.notify();
+      window.dispatchEvent(new CustomEvent('medflow_data_changed', { detail: { key } }));
     } catch (err) {
       console.error(`Error writing key ${key} to storage:`, err);
     }
@@ -521,7 +522,7 @@ class MedFlowStorageService {
         return {
           success: false,
           status: 'failed',
-          error: response.error || 'Failed to dispatch call via Sarvam API.',
+          error: (typeof response.error === 'object' ? (response.error as any)?.message : response.error) || 'Failed to dispatch call via Sarvam API.',
           appointmentId: appointment.id,
           phoneNumber: verifiedE164Phone
         };
@@ -978,7 +979,12 @@ class MedFlowStorageService {
 
   public getAICallingSettings(hospitalId: string): AICallingSettings {
     const settingsMap = this.getItem<Record<string, AICallingSettings>>(STORAGE_KEYS.AI_SETTINGS, initialAICallingSettings);
-    return settingsMap[hospitalId] || initialAICallingSettings.hospital_001;
+    const s = settingsMap[hospitalId] || initialAICallingSettings.hospital_001;
+    // Ensure provisioned Sarvam agent phone number is always standard
+    if (!s.callingNumber || s.callingNumber.includes('555') || s.callingNumber.includes('777')) {
+      s.callingNumber = '+1 (463) 262-0069';
+    }
+    return s;
   }
 
   public updateAICallingSettings(hospitalId: string, settings: Partial<AICallingSettings>, actingUser?: UserProfile): AICallingSettings {

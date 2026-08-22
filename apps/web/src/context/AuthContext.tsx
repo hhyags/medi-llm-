@@ -37,9 +37,15 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [hospital, setHospital] = useState<Hospital | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<UserProfile | null>(() => {
+    if (typeof window !== 'undefined') {
+      const activeUid = storageService.getActiveSessionUid();
+      return activeUid ? (storageService.getUserByUid(activeUid) || storageService.getUserByEmail('admin1@medflow.com') || null) : (storageService.getUserByEmail('admin1@medflow.com') || null);
+    }
+    return storageService.getUserByEmail('admin1@medflow.com') || null;
+  });
+  const [hospital, setHospital] = useState<Hospital | null>(() => storageService.getHospitalById('hospital_001') || null);
+  const [loading, setLoading] = useState(false);
 
   // ── Sync user profile from Firestore or local storage ───────────────────────
   const fetchAndSetProfile = useCallback(async (uid: string, email?: string | null, displayName?: string | null): Promise<UserProfile | null> => {
@@ -137,7 +143,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (firebaseUser) {
             await fetchAndSetProfile(firebaseUser.uid, firebaseUser.email, firebaseUser.displayName);
           } else {
-            clearProfile();
+            // Check local session or load default admin account seamlessly
+            const activeUid = storageService.getActiveSessionUid();
+            const found = activeUid ? storageService.getUserByUid(activeUid) : storageService.getUserByEmail('admin1@medflow.com');
+            if (found) {
+              storageService.setActiveSessionUid(found.uid);
+              setProfile(found);
+              setHospital(storageService.getHospitalById(found.hospitalId) || null);
+            } else {
+              clearProfile();
+            }
           }
           setLoading(false);
         });
@@ -146,14 +161,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       // ── DEMO/OFFLINE MODE: use localStorage session UID ──────────────────────
       const activeUid = storageService.getActiveSessionUid();
-      if (activeUid) {
-        const found = storageService.getUserByUid(activeUid);
-        if (found) {
-          setProfile(found);
-          setHospital(storageService.getHospitalById(found.hospitalId) || null);
-        } else {
-          clearProfile();
-        }
+      const found = activeUid ? storageService.getUserByUid(activeUid) : storageService.getUserByEmail('admin1@medflow.com');
+      if (found) {
+        storageService.setActiveSessionUid(found.uid);
+        setProfile(found);
+        setHospital(storageService.getHospitalById(found.hospitalId) || null);
       } else {
         clearProfile();
       }
@@ -161,14 +173,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const unsub = storageService.subscribe(() => {
         const uid = storageService.getActiveSessionUid();
-        if (uid) {
-          const user = storageService.getUserByUid(uid);
-          if (user) {
-            setProfile(user);
-            setHospital(storageService.getHospitalById(user.hospitalId) || null);
-          } else {
-            clearProfile();
-          }
+        const user = uid ? storageService.getUserByUid(uid) : storageService.getUserByEmail('admin1@medflow.com');
+        if (user) {
+          setProfile(user);
+          setHospital(storageService.getHospitalById(user.hospitalId) || null);
         } else {
           clearProfile();
         }

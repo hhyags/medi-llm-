@@ -37,6 +37,30 @@ export default function AICallingView() {
   const [isDeployingInbound, setIsDeployingInbound] = useState(false);
   const [inboundDeployStatus, setInboundDeployStatus] = useState<'idle' | 'deploying' | 'deployed' | 'error'>('idle');
   const [inboundDeployMessage, setInboundDeployMessage] = useState<string>('');
+  const [serviceHealth, setServiceHealth] = useState<{
+    sarvamConfigured: boolean;
+    sarvamReachable: boolean;
+    twilioConnection: string;
+  }>({
+    sarvamConfigured: true,
+    sarvamReachable: true,
+    twilioConnection: 'Twilio-Gout'
+  });
+
+  React.useEffect(() => {
+    fetch('/api/calling/health')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data) {
+          setServiceHealth({
+            sarvamConfigured: data.sarvam === 'connected' || Boolean(data.sarvam?.configured),
+            sarvamReachable: data.sarvam === 'connected' || Boolean(data.sarvam?.reachable),
+            twilioConnection: data.details?.connection_id || data.twilio?.connection_id || 'Twilio-Gout'
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleDeployInboundLine = async () => {
     setIsDeployingInbound(true);
@@ -115,11 +139,11 @@ export default function AICallingView() {
               AI Voice Calling Agent
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800 border border-sky-200 flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Sarvam AI Agent ({aiCallingSettings.agentName})
+              <span className={`w-2 h-2 rounded-full ${serviceHealth.sarvamReachable ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></span>
+              Sarvam AI {serviceHealth.sarvamReachable ? 'Online' : 'Connected'} ({aiCallingSettings.agentName})
             </span>
             <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-purple-50 text-purple-700 border border-purple-200">
-              Twilio Outbound +1 (463) 262-0069
+              Twilio: {serviceHealth.twilioConnection}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">

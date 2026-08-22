@@ -57,20 +57,20 @@ export default function AICallModal() {
   // Sarvam Live Outbound Call State
   const [targetPhone, setTargetPhone] = useState('');
   const [isDispatchingSarvam, setIsDispatchingSarvam] = useState(false);
-  const [sarvamCallStatus, setSarvamCallStatus] = useState<'idle' | 'initiating' | 'queued' | 'in-progress' | 'completed' | 'failed'>('idle');
+  const [sarvamCallStatus, setSarvamCallStatus] = useState<'idle' | 'preparing' | 'connecting' | 'queued' | 'in-progress' | 'completed' | 'failed'>('idle');
   const [sarvamResponse, setSarvamResponse] = useState<any>(null);
   const [showPayloadInspector, setShowPayloadInspector] = useState(false);
-  const [sarvamError, setSarvamError] = useState('');
+  const [sarvamError, setSarvamError] = useState<any>(null);
 
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const patientName = activeCallPatient?.name || activeCallAppointment?.patientName || 'Rahul Sharma';
-  const patientPhone = activeCallPatient?.phone || activeCallAppointment?.patientPhone || '+14632620069';
-  const doctorName = activeCallAppointment?.doctorName || 'Dr. Meera Patel, MD';
-  const appointmentDate = activeCallAppointment?.date || '2026-08-20';
+  const patientPhone = activeCallPatient?.phone || activeCallAppointment?.patientPhone || '+919390285197';
+  const doctorName = activeCallAppointment?.doctorName || 'Dr. Priya Sharma';
+  const appointmentDate = activeCallAppointment?.date || 'Tomorrow';
   const appointmentTime = activeCallAppointment?.time || '10:30 AM';
-  const department = activeCallAppointment?.department || 'Cardiology';
+  const department = activeCallAppointment?.department || 'Dermatology';
 
   // Initialize target phone when modal opens
   useEffect(() => {
@@ -78,7 +78,7 @@ export default function AICallModal() {
       setTargetPhone(patientPhone);
       setSarvamCallStatus('idle');
       setSarvamResponse(null);
-      setSarvamError('');
+      setSarvamError(null);
     }
   }, [isCallModalOpen, patientPhone]);
 
@@ -102,27 +102,32 @@ export default function AICallModal() {
   // ─── Sarvam Live Call Dispatch ───────────────────────────────────────────────
   const handleInitiateSarvamCall = async () => {
     if (!targetPhone.trim()) {
-      setSarvamError('Please enter a valid phone number with country code (e.g. +14632620069 or +91...)');
+      setSarvamError({
+        code: 'MISSING_PHONE',
+        message: 'Please enter a valid phone number with country code (e.g. +919390285197).'
+      });
       return;
     }
 
     setIsDispatchingSarvam(true);
-    setSarvamError('');
-    setSarvamCallStatus('initiating');
+    setSarvamError(null);
+    setSarvamCallStatus('preparing');
 
     try {
+      setSarvamCallStatus('connecting');
+
       const response = await fetch('/api/calling/outbound', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           targetPhone: targetPhone.trim(),
-          patient: activeCallPatient || { name: patientName, phone: targetPhone },
+          patient: activeCallPatient || { name: patientName, phone: targetPhone.trim() },
           appointment: activeCallAppointment || {
             date: appointmentDate,
             time: appointmentTime,
             doctorName,
             patientName,
-            patientPhone: targetPhone,
+            patientPhone: targetPhone.trim(),
             department
           },
           doctor: { name: doctorName, specialization: department, department },
@@ -131,10 +136,10 @@ export default function AICallModal() {
         })
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
       setSarvamResponse(data);
 
-      if (data.success) {
+      if (response.ok && data.success) {
         setSarvamCallStatus('queued');
         // Record in CRM call logs
         recordAICall({
@@ -155,11 +160,11 @@ export default function AICallModal() {
           outcome: 'confirmed',
           durationSeconds: 0,
           startedAt: new Date().toISOString(),
-          summary: `Sarvam AI Outbound Call queued for ${patientName} via Agent ${aiCallingSettings.agentName} (Outbound ID: ${data.outbound_id || 'N/A'}).`,
+          summary: `Sarvam AI Outbound Call queued for ${patientName} via Agent ${aiCallingSettings.agentName} (Attempt ID: ${data.attemptId || data.outbound_id || 'N/A'}).`,
           transcript: [
             {
               speaker: 'system',
-              text: `Outbound call initiated to ${targetPhone} via Sarvam Voice Agent (${aiCallingSettings.agentName}). Connection: ${SARVAM_DEFAULTS.CONNECTION_ID}.`,
+              text: `Outbound call initiated to ${targetPhone} via Sarvam Voice Agent (${aiCallingSettings.agentName}). Telephony Trunk: Twilio-Gout.`,
               timestamp: new Date().toLocaleTimeString()
             }
           ],
@@ -169,14 +174,19 @@ export default function AICallModal() {
         });
       } else {
         setSarvamCallStatus('failed');
-        const rawErr = data.error || 'Failed to initiate outbound call via Sarvam AI API.';
-        const errText = typeof rawErr === 'object' ? (rawErr.message || JSON.stringify(rawErr)) : String(rawErr);
-        setSarvamError(errText);
+        const errObj = data.error || {
+          code: 'SARVAM_CALL_FAILED',
+          message: 'Unable to start the outbound call. Please check the server configuration.'
+        };
+        setSarvamError(errObj);
       }
     } catch (err: any) {
       setSarvamCallStatus('failed');
-      const errText = err?.message || (typeof err === 'object' ? JSON.stringify(err) : String(err)) || 'Network error while contacting /api/calling/outbound.';
-      setSarvamError(errText);
+      setSarvamError({
+        code: 'NETWORK_ERROR',
+        message: 'Unable to connect to the calling service. Please check your network and server configuration.',
+        details: err?.message || String(err)
+      });
     } finally {
       setIsDispatchingSarvam(false);
     }
@@ -627,7 +637,7 @@ export default function AICallModal() {
             <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                  Target Recipient Phone Number
+                  Target Recipient Phone Number (E.164)
                 </label>
                 <div className="flex items-center gap-2">
                   <div className="relative flex-1">
@@ -636,7 +646,7 @@ export default function AICallModal() {
                       type="text"
                       value={targetPhone}
                       onChange={(e) => setTargetPhone(e.target.value)}
-                      placeholder="+1 (555) 000-0000 or +91..."
+                      placeholder="+919390285197"
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white font-mono placeholder-slate-500 focus:outline-hidden focus:border-sky-500"
                     />
                   </div>
@@ -649,7 +659,9 @@ export default function AICallModal() {
                     {isDispatchingSarvam ? (
                       <>
                         <RefreshCw className="w-4 h-4 animate-spin" />
-                        <span>Dispatching...</span>
+                        <span>
+                          {sarvamCallStatus === 'preparing' ? 'Validating...' : 'Connecting...'}
+                        </span>
                       </>
                     ) : (
                       <>
@@ -660,14 +672,65 @@ export default function AICallModal() {
                   </button>
                 </div>
                 <p className="text-[11px] text-slate-500 mt-1.5">
-                  Calls are placed via Sarvam AI API using Twilio outbound trunk <span className="font-mono text-slate-400">{SARVAM_DEFAULTS.AGENT_PHONE_NUMBER}</span>.
+                  Calls are placed via Sarvam AI API through Twilio connection <span className="font-mono text-slate-400">{SARVAM_DEFAULTS.CONNECTION_ID}</span> (Caller ID: <span className="font-mono text-slate-400">{SARVAM_DEFAULTS.AGENT_PHONE_NUMBER}</span>).
                 </p>
               </div>
 
-              {sarvamError && (
-                <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-800 text-xs text-rose-300 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
-                  <span>{typeof sarvamError === 'object' ? (sarvamError as any)?.message || JSON.stringify(sarvamError) : String(sarvamError)}</span>
+              {/* 404 Agent Phone Missing Error Alert */}
+              {sarvamError && (sarvamError.code === 'SARVAM_AGENT_PHONE_NOT_FOUND' || JSON.stringify(sarvamError).includes('not found') || JSON.stringify(sarvamError).includes('404')) && (
+                <div className="p-4 rounded-xl bg-rose-950/80 border border-rose-800 text-xs text-rose-200 space-y-2">
+                  <div className="flex items-center gap-2 font-bold text-xs text-rose-300">
+                    <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                    <span>Sarvam Voice Agent Configuration Error</span>
+                  </div>
+                  <p className="text-[11px] text-rose-200 leading-relaxed font-medium">
+                    Your Sarvam Voice Agent phone number is not configured or is not available in the current workspace.
+                  </p>
+                  <div className="p-3 rounded-lg bg-slate-950/80 border border-rose-900/60 font-mono text-[11px] text-slate-300 space-y-1">
+                    <div><strong>Agent:</strong> {aiCallingSettings.agentName || 'Aria — MedFlow Voice Assistant'}</div>
+                    <div><strong>Connection:</strong> {SARVAM_DEFAULTS.CONNECTION_ID}</div>
+                    <div><strong>Agent Phone:</strong> {SARVAM_DEFAULTS.AGENT_PHONE_NUMBER}</div>
+                    <div><strong>Caller ID:</strong> {SARVAM_DEFAULTS.AGENT_PHONE_NUMBER}</div>
+                    <div><strong>Target:</strong> {targetPhone}</div>
+                    <div><strong>Status:</strong> <span className="text-rose-400 font-bold">CONFIGURATION ERROR</span></div>
+                  </div>
+                  <p className="text-[10px] text-amber-300 font-medium">
+                    💡 Check Sarvam &rarr; Voice Agents &rarr; Deploy &rarr; Phone Numbers to verify the phone number is active and assigned.
+                  </p>
+                </div>
+              )}
+
+              {/* Twilio Trial Account Warning Alert */}
+              {sarvamError?.code === 'TWILIO_TRIAL_RESTRICTION' && (
+                <div className="p-4 rounded-xl bg-amber-950/70 border border-amber-800/80 text-amber-200 space-y-2">
+                  <div className="flex items-center gap-2 font-bold text-xs text-amber-300">
+                    <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>Twilio Trial Account Verification Required</span>
+                  </div>
+                  <p className="text-[11px] text-amber-200/90 leading-relaxed">
+                    This phone number (<strong>{targetPhone}</strong>) must be verified in your Twilio account before outbound calls can ring.
+                  </p>
+                  <div className="text-[11px] bg-slate-950/60 p-2.5 rounded-lg border border-amber-900/60 font-mono text-amber-300">
+                    1. Open Twilio Console &rarr; Phone Numbers &rarr; Verified Caller IDs<br />
+                    2. Add <strong>{targetPhone}</strong> and enter verification code<br />
+                    3. Ensure Voice &rarr; Settings &rarr; Geo Permissions has India (+91) enabled
+                  </div>
+                </div>
+              )}
+
+              {/* General Structured Error Alert */}
+              {sarvamError && sarvamError.code !== 'TWILIO_TRIAL_RESTRICTION' && sarvamError.code !== 'SARVAM_AGENT_PHONE_NOT_FOUND' && !JSON.stringify(sarvamError).includes('not found') && (
+                <div className="p-3.5 rounded-xl bg-rose-950/70 border border-rose-800 text-xs text-rose-200 space-y-1">
+                  <div className="flex items-center gap-2 font-bold text-rose-300">
+                    <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                    <span>{sarvamError.code ? `Error [${sarvamError.code}]` : 'Calling Error'}</span>
+                  </div>
+                  <p className="text-rose-200">{sarvamError.message || JSON.stringify(sarvamError)}</p>
+                  {sarvamError.details && (
+                    <p className="text-[10px] font-mono text-rose-400/90 break-all bg-rose-950/90 p-1.5 rounded border border-rose-900/60">
+                      {sarvamError.details}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -678,33 +741,42 @@ export default function AICallModal() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-white uppercase tracking-wider">Outbound Call Execution</span>
-                    {sarvamCallStatus === 'initiating' && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 animate-pulse">Contacting Sarvam API...</span>
+                    {sarvamCallStatus === 'preparing' && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-300 animate-pulse">1. Validating Phone & Config...</span>
+                    )}
+                    {sarvamCallStatus === 'connecting' && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 animate-pulse">2. Contacting Sarvam AI Engine...</span>
                     )}
                     {sarvamCallStatus === 'queued' && (
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                        Queued with Carrier
+                        3. Queued with Telephony Carrier
                       </span>
                     )}
                     {sarvamCallStatus === 'completed' && (
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-300 flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3 text-sky-400" />
-                        Completed & Logged
+                        4. Completed & Logged in CRM
+                      </span>
+                    )}
+                    {sarvamCallStatus === 'failed' && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3 text-rose-400" />
+                        Call Dispatch Failed
                       </span>
                     )}
                   </div>
 
-                  {sarvamResponse?.outbound_id && (
+                  {(sarvamResponse?.attemptId || sarvamResponse?.outbound_id) && (
                     <span className="text-[10px] text-slate-400 font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
-                      ID: {typeof sarvamResponse.outbound_id === 'object' ? JSON.stringify(sarvamResponse.outbound_id) : String(sarvamResponse.outbound_id)}
+                      Attempt ID: {sarvamResponse.attemptId || sarvamResponse.outbound_id}
                     </span>
                   )}
                 </div>
 
                 {sarvamResponse?.message && (
                   <p className="text-xs text-slate-300 font-medium bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
-                    {typeof sarvamResponse.message === 'object' ? (sarvamResponse.message as any)?.message || JSON.stringify(sarvamResponse.message) : String(sarvamResponse.message)}
+                    {sarvamResponse.message}
                   </p>
                 )}
 
@@ -790,8 +862,7 @@ export default function AICallModal() {
                         bookingReminderChannel: "SMS & Voice"
                       },
                       app_overrides: {
-                        initial_bot_message: `Hello ${patientName.split(' ')[0]}, I'm ${aiCallingSettings.agentName} calling from ${hospitalSettings.name}...`,
-                        initial_state_name: "entry"
+                        initial_bot_message: `Hello ${patientName.split(' ')[0]}, I'm ${aiCallingSettings.agentName} calling from ${hospitalSettings.name}...`
                       }
                     },
                     user_config: {

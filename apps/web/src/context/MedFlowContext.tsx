@@ -140,7 +140,29 @@ export function MedFlowProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = storageService.subscribe(() => {
       loadData();
     });
-    return () => unsubscribe();
+
+    const handleCustomChange = () => {
+      loadData();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleCustomChange);
+      window.addEventListener('medflow_data_changed', handleCustomChange);
+      window.addEventListener('medflow_call_updated', handleCustomChange);
+    }
+
+    // Auto-sync interval for live calling status updates
+    const syncTimer = setInterval(loadData, 2500);
+
+    return () => {
+      unsubscribe();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('storage', handleCustomChange);
+        window.removeEventListener('medflow_data_changed', handleCustomChange);
+        window.removeEventListener('medflow_call_updated', handleCustomChange);
+      }
+      clearInterval(syncTimer);
+    };
   }, [loadData]);
 
   const openCallModal = (appointment?: Appointment, patient?: Patient) => {
