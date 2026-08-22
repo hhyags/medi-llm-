@@ -6,6 +6,7 @@ Provides server-to-server integration with Sarvam AI Voice Agent Outbounds & Inb
 import os
 import httpx
 from typing import Dict, Any, Optional, List
+from app.config import Settings
 
 DEFAULT_SARVAM_OUTBOUND_BASE_URL = "https://apps.sarvam.ai/api/outbounds/v1"
 DEFAULT_SARVAM_AUTHORING_BASE_URL = "https://apps.sarvam.ai/api/app-authoring/v1"
@@ -28,14 +29,15 @@ class SarvamCallingClient:
         connection_id: Optional[str] = None,
         agent_phone_number: Optional[str] = None,
     ):
-        self.api_key = api_key or os.getenv("SARVAM_API_KEY", "")
-        self.org_id = org_id or os.getenv("SARVAM_ORG_ID", DEFAULT_ORG_ID)
-        self.workspace_id = workspace_id or os.getenv("SARVAM_WORKSPACE_ID", DEFAULT_WORKSPACE_ID)
-        self.app_id = app_id or os.getenv("SARVAM_APP_ID", DEFAULT_APP_ID)
+        settings = Settings()
+        self.api_key = api_key or settings.sarvam_api_key or os.getenv("SARVAM_API_KEY", "")
+        self.org_id = org_id or settings.sarvam_org_id or os.getenv("SARVAM_ORG_ID", DEFAULT_ORG_ID)
+        self.workspace_id = workspace_id or settings.sarvam_workspace_id or os.getenv("SARVAM_WORKSPACE_ID", DEFAULT_WORKSPACE_ID)
+        self.app_id = app_id or settings.sarvam_app_id or os.getenv("SARVAM_APP_ID", DEFAULT_APP_ID)
         self.app_version = DEFAULT_APP_VERSION
         self.app_type = DEFAULT_APP_TYPE
-        self.connection_id = connection_id or os.getenv("SARVAM_CONNECTION_ID", DEFAULT_CONNECTION_ID)
-        self.agent_phone_number = agent_phone_number or os.getenv("SARVAM_AGENT_PHONE_NUMBER", DEFAULT_AGENT_PHONE_NUMBER)
+        self.connection_id = connection_id or settings.sarvam_connection_id or os.getenv("SARVAM_CONNECTION_ID", DEFAULT_CONNECTION_ID)
+        self.agent_phone_number = agent_phone_number or settings.sarvam_agent_phone_number or os.getenv("SARVAM_AGENT_PHONE_NUMBER", DEFAULT_AGENT_PHONE_NUMBER)
         self.outbound_url = f"{DEFAULT_SARVAM_OUTBOUND_BASE_URL}/orgs/{self.org_id}/workspaces/{self.workspace_id}/outbounds"
         self.deployment_url = f"{DEFAULT_SARVAM_AUTHORING_BASE_URL}/orgs/{self.org_id}/workspaces/{self.workspace_id}/deployments"
 

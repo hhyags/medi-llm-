@@ -37,6 +37,14 @@ class Settings(BaseSettings):
     google_api_key: Optional[str] = Field(default=None)
     gemini_api_key: Optional[str] = Field(default=None)
 
+    # Sarvam AI Calling
+    sarvam_api_key: Optional[str] = Field(default=None)
+    sarvam_org_id: Optional[str] = Field(default=None)
+    sarvam_workspace_id: Optional[str] = Field(default=None)
+    sarvam_app_id: Optional[str] = Field(default=None)
+    sarvam_connection_id: Optional[str] = Field(default=None)
+    sarvam_agent_phone_number: Optional[str] = Field(default=None)
+
     def get_effective_google_api_key(self) -> Optional[str]:
         """Return the active Google/Vertex API key from config or env."""
         return (
